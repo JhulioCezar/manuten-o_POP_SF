@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ordem de Serviço – Manutenção Preventiva POP</title>
+<style>
+  :root{
+    --primary:#0d6efd;
+    --bg:#f8f9fa;
+    --card:#fff;
+    --muted:#666;
+  }
+  *{box-sizing:border-box}
+  body{
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    margin:0;
+    background:var(--bg);
+    color:#222;
+    padding:20px 12px;
+  }
+  .container{
+    max-width:1100px;
+    margin:0 auto;
+  }
+  header{
+    background:#fff;
+    padding:12px 0;
+    text-align:center;
+    border-radius:10px;
+    margin-bottom:14px;
+  }
+  header img{width:220px; height:auto;}
+  h1{
+    text-align:center;
+    color:var(--primary);
+    margin:12px 0;
+    font-size:1.35rem;
+  }
+  form.card{
+    background:var(--card);
+    padding:18px;
+    border-radius:10px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.06);
+  }
+  .row{display:flex; gap:12px; flex-wrap:wrap;}
+  .col{flex:1; min-width:200px;}
+  label{display:block; font-weight:600; margin:8px 0 4px;}
+  input[type="text"], input[type="date"], input[type="time"], input[type="datetime-local"], textarea, select {
+    width:100%;
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    background:#fff;
+    font-size:0.95rem;
+  }
+  textarea{min-height:68px; resize:vertical;}
+  .small{max-width:140px;}
+  .section{
+    margin-top:18px;
+    padding-top:12px;
+    border-top:1px dashed #e6e6e6;
+  }
+  .section h2{color:var(--primary); margin:0 0 8px; font-size:1.05rem;}
+  .item{
+    background:#fafafa;
+    border:1px solid #eee;
+    padding:10px 12px;
+    margin-bottom:12px;
+    border-radius:8px;
+  }
+  .item-header{display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap;}
+  .item-header .title{font-weight:700;}
+  .photo-preview{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+  .photo-preview img{width:110px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #ccc;}
+  .sign-box{border:1px solid #ddd; border-radius:8px; padding:8px; background:#fff; text-align:center;}
+  .sign-canvas{border:1px dashed #bbb; border-radius:6px; width:100%; height:140px; touch-action: none; background:#fff;}
+  .btn{display:inline-block; padding:10px 14px; background:var(--primary); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:600;}
+  .btn.secondary{background:#6c757d;}
+  .meta{font-size:0.9rem; color:var(--muted)}
+  .footer-actions{display:flex; gap:12px; justify-content:flex-end; margin-top:18px; flex-wrap:wrap;}
+
+  /* 🔧 Correção de posição do botão "Usar agora" */
+  .datetime-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .datetime-group input[type="datetime-local"] {
+    flex: 1;
+    min-width: 0; /* evita que o input empurre o botão */
+  }
+  .datetime-group .btn {
+    white-space: nowrap;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+  }
+
+	/* Botão personalizado "Inserir" */
+  	.file-input-wrapper {
+    	position: relative;
+  	display: inline-block;
+  	}
+  	.file-input-wrapper input[type="file"] {
+    	position: absolute;
+    	left: 0;
+    	top: 0;
+    	opacity: 0;
+    	width: 100%;
+    	height: 100%;
+    	cursor: pointer;
+  	}
+  	.file-input-wrapper .custom-btn {
+    	display: inline-block;
+    	background: var(--primary);
+    	color: #fff;
+    	padding: 8px 14px;
+    	border-radius: 8px;
+    	font-weight: 600;
+    	font-size: 0.9rem;
+    	cursor: pointer;
+    	border: none;
+  }
+
+  @media print{
+    body{padding:0}
+    .btn, .no-print{display:none!important}
+    header, form.card{box-shadow:none; border:none; border-radius:0}
+    .sign-canvas{border:none}
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="https://i.imgur.com/SEr4lkm.png" alt="Sem Fronteiras UltraFibra">
+    </header>
+
+    <h1>ORDEM DE SERVIÇO – MANUTENÇÃO PREVENTIVA POP</h1>
+
+    <form id="osForm" class="card" onsubmit="return false;">
+      <!-- Cabeçalho dados -->
+      <div class="row">
+        <div class="col">
+          <label>Nº da OS</label>
+          <input type="text" id="numeroOS" readonly />
+          <div class="meta">Formato: <strong>NNN/AAAA</strong> (gerado automaticamente)</div>
+        </div>
+
+        <div class="col">
+          <label>Data / Hora</label>
+          <!-- ✅ Trecho corrigido -->
+          <div class="datetime-group">
+            <input type="datetime-local" id="dataHora" />
+            <button type="button" id="btnUseNow" class="btn no-print">Usar agora</button>
+          </div>
+          <div class="meta">Você pode usar a data/hora atual ou editar manualmente.</div>
+        </div>
+
+        <div class="col">
+          <label>Hora Início</label>
+          <input type="time" id="horaInicio" />
+          <div class="meta">Preenchido automaticamente na abertura (editável)</div>
+        </div>
+
+        <div class="col">
+          <label>Hora Término</label>
+          <input type="time" id="horaTermino" />
+          <div class="meta">Será preenchido automaticamente ao gerar/imprimir (editável)</div>
+        </div>
+      </div>
+
+      <!-- POP e Endereço -->
+      <div class="section">
+        <h2>Local (POP) / Endereço / Localização</h2>
+        <div class="row">
+          <div class="col">
+            <label>Local (POP)</label>
+            <select id="popSelect">
+              <option value="">-- Selecione o POP --</option>
+            </select>
+          </div>
+
+          <div class="col">
+            <label>Endereço</label>
+            <input type="text" id="endereco" />
+          </div>
+
+          <div class="col">
+            <label>Localização (Google Maps)</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input type="text" id="localizacao" readonly />
+              <a id="mapsLink" href="#" target="_blank" style="display:inline-block; padding:8px 10px; background:#e9ecef; border-radius:8px; text-decoration:none;">Abrir</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 1 -->
+      <div class="section">
+        <h2>1. Verificação da Infraestrutura e Condições Ambientais</h2>
+
+        <!-- Item exemplo: 1.1 -->
+        <div class="item">
+          <div class="item-header">
+            <div class="title">1.1 Limpeza do rack e equipamentos</div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <select name="limpeza_rack_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          label>Observações</label>
+          <textarea name="limpeza_rack_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview1" class="imgInput">
+            </div>
+            <div id="preview1" class="photo-preview"></div>
+          </div>
+        </div>
+
+        <!-- Item 1.2 -->
+        <div class="item">
+          <div class="item-header">
+            <div class="title">1.2 Organização dos cabos e patch cords</div>
+            <div>
+              <select name="cabos_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="cabos_obs" placeholder="Observações..."></textarea>
+
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview2" class="imgInput">
+            </div>
+            <div id="preview2" class="photo-preview"></div>
+          </div>
+        </div>
+
+
+        <!-- Item 1.3 -->
+        <div class="item">
+          <div class="item-header">
+            <div class="title">1.3 Temperatura ambiente (°C)</div>
+            <div>
+              <select name="temp_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações / Valor (°C)</label>
+          <input type="text" name="temp_obs" placeholder="Ex: 24°C - Observações..." />
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview3" class="imgInput">
+            </div>
+            <div id="preview3" class="photo-preview"></div>
+          </div>
+        </div>
+
+        <!-- Item 1.4 -->
+        <div class="item">
+          <div class="item-header">
+            <div class="title">1.4 Ventilação / ar-condicionado</div>
+            <div>
+              <select name="vent_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="vent_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview4" class="imgInput">
+            </div>
+            <div id="preview4" class="photo-preview"></div>
+          </div>
+        </div>
+
+        <!-- Item 1.5 -->
+        <div class="item">
+          <div class="item-header">
+            <div class="title">1.5 Porta e fechaduras do POP</div>
+            <div>
+              <select name="porta_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="porta_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview5" class="imgInput">
+            </div>
+            <div id="preview5" class="photo-preview"></div>
+          </div>
+        </div>
+
+        <!-- Item 1.6 -->
+        <div class="item">
+          <div class="item-header">
+            <div class="title">1.6 Identificação de equipamentos e cabos</div>
+            <div>
+              <select name="id_equip_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="id_equip_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview6" class="imgInput">
+            </div>
+            <div id="preview6" class="photo-preview"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Seção 2 -->
+      <div class="section">
+        <h2>2. Manutenção dos Equipamentos Principais</h2>
+
+        <div class="item">
+          <div class="item-header">
+            <div class="title">2.1 OLT (Optical Line Terminal)</div>
+            <div>
+              <select name="olt_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="olt_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview7" class="imgInput">
+            </div>
+            <div id="preview7" class="photo-preview"></div>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="item-header">
+            <div class="title">2.2 Switch (SW)</div>
+            <div>
+              <select name="sw_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="sw_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview8" class="imgInput">
+            </div>
+            <div id="preview8" class="photo-preview"></div>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="item-header">
+            <div class="title">2.3 Retificadora e Baterias</div>
+            <div>
+              <select name="ret_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="ret_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview9" class="imgInput">
+            </div>
+            <div id="preview9" class="photo-preview"></div>
+          </div>
+        </div>
+
+      <!-- Seção 3 -->
+      <div class="section">
+        <h2>3. Ações Corretivas e Observações</h2>
+        <label>Ações realizadas</label>
+        <textarea name="acoes_realizadas"></textarea>
+
+        <label style="margin-top:8px;">Observações / Recomendações</label>
+        <textarea name="observacoes_recomendacoes"></textarea>
+      </div>
+
+      <!-- Próxima manutenção -->
+      <div class="section">
+        <h2>4. Próxima Manutenção</h2>
+        <label>Data estimada</label>
+        <input type="date" id="dataEstimada" />
+        <div class="meta">Preenchida automaticamente com +3 meses (editável)</div>
+      </div>
+
+      <!-- Assinaturas -->
+      <div class="section">
+        <h2>Assinaturas</h2>
+        <div class="row">
+          <div class="col">
+            <label>Assinatura do Técnico</label>
+            <div class="sign-box">
+              <canvas id="sigTech" class="sign-canvas"></canvas>
+              <div style="display:flex; gap:8px; margin-top:8px; justify-content:center;">
+                <button type="button" class="btn secondary no-print" onclick="clearSig('sigTech')">Limpar</button>
+                <button type="button" class="btn no-print" onclick="saveSig('sigTech','sigTechImg')">Salvar assinatura</button>
+              </div>
+              <input type="hidden" id="sigTechImg" />
+              <div id="sigTechPreview" style="margin-top:8px;"></div>
+            </div>
+          </div>
+
+          <div class="col">
+            <label>Assinatura do Responsável (Cliente/Supervisor)</label>
+            <div class="sign-box">
+              <canvas id="sigResp" class="sign-canvas"></canvas>
+              <div style="display:flex; gap:8px; margin-top:8px; justify-content:center;">
+                <button type="button" class="btn secondary no-print" onclick="clearSig('sigResp')">Limpar</button>
+                <button type="button" class="btn no-print" onclick="saveSig('sigResp','sigRespImg')">Salvar assinatura</button>
+              </div>
+              <input type="hidden" id="sigRespImg" />
+              <div id="sigRespPreview" style="margin-top:8px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ações -->
+      <div class="footer-actions no-print">
+        <button type="button" class="btn secondary" onclick="saveDraft()">Salvar (local)</button>
+        <button type="button" class="btn" onclick="generateAndPrint()">Gerar e Imprimir</button>
+      </div>
+    </form>
+  </div>
+
+<script>
+/* ========== Dados dos POPs (ordenados alfabeticamente) ========== */
+const pops = [
+  {name:"4 Bocas", address:"Br 364 km 25 sentido - Porto Velho, Rio Branco - AC, 69900-000", maps:"https://maps.app.goo.gl/iRFgi4HiX6qroz1X8"},
+  {name:"Acrelândia", address:"Acrelândia, Acre", maps:"https://maps.app.goo.gl/uAzxTA8C54GQtmTE8"},
+  {name:"Albert Sampaio", address:"Rodovia BR-364 Albert Sampaio, Rio Branco - AC, 69909-040", maps:"https://maps.app.goo.gl/1kQs6jH4PpJN8mKf8"},
+  {name:"Assis Brasil", address:"Ipiranga, Assis Brasil - AC, 69935-000", maps:"https://maps.app.goo.gl/zafXZppgL2Yae3Bu5"},
+  {name:"Belo Jardim", address:"Tv. Isaías, 208 - Belo Jardim I, Rio Branco - AC, 69907-848", maps:"https://maps.app.goo.gl/FnPmXhj7hSdbp6sA6"},
+  {name:"Benfica", address:"Benfica, Rio Branco, Acre", maps:"https://maps.app.goo.gl/6BLpDpxT9QFggr5eA"},
+  {name:"Bom Jesus", address:"Vila Acre, Rio Branco - AC", maps:"https://maps.app.goo.gl/7ARa5NroqG1rEUMq7"},
+  {name:"Bujari", address:"Bujari, AC, 69923-000", maps:"https://maps.app.goo.gl/gYnGmjFqhXHHL52aA"},
+  {name:"Calafate", address:"R. Abunã, 81 - Portal da Amazônia, Rio Branco - AC, 69915-840", maps:"https://maps.app.goo.gl/XeTCvk7LhbRCwkpNA"},
+  {name:"Capixaba", address:"Capixaba, AC, 69922-000", maps:"https://maps.app.goo.gl/T5aC4EG1VsuKBsDz5"},
+  {name:"Cidade do Povo", address:"Cidade do Povo, Rio Branco - AC, 69925-000", maps:"https://maps.app.goo.gl/c7ycJ1PGT3MFTDkn6"},
+  {name:"Data Center", address:"R. Bertioga, 131-61 - Vila Ivonete, Rio Branco - AC, 69914-570", maps:"https://maps.app.goo.gl/9oS3kq45e6Han7hH8"},
+  {name:"Esperança", address:"R. São José, 376 - Nova Esperança, Rio Branco - AC, 69915-202", maps:"https://maps.app.goo.gl/C4Veu4rWL7yH1mfy7"},
+  {name:"Feijó", address:"BR-364, 122, Feijó - AC, 69960-000", maps:"https://maps.app.goo.gl/3SSLGh2rvsDBFVn29"},
+  {name:"Liberdade", address:"BR-364, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/HjJkKVHR1Bcr1U2o7"},
+  {name:"Mâncio Lima", address:"R João B Rodrigues, 428 - Centro, Mâncio Lima - AC, 69900-970", maps:"https://maps.app.goo.gl/fG5f81v4jcBbiXcPA"},
+  {name:"Manoel Urbano", address:"Manoel Urbano, Acre", maps:"https://maps.app.goo.gl/7wEyk5Gj9RYn7aNw7"},
+  {name:"Maison Borges", address:"Distrito Industrial, Rio Branco - AC", maps:"https://maps.app.goo.gl/tMVds5Jq6mwRnEUF7"},
+  {name:"Part e Alta", address:"R. João Francisco da Cunha, 39 - Conj Procom, Rio Branco - AC, 69918-632", maps:"https://maps.app.goo.gl/25wwXie6vogyE8az8"},
+  {name:"Plácido de Castro", address:"R. Diamantino A De Macedo, 1112 - Plácido De Castro, Plácido de Castro - AC, 69928-000", maps:"https://maps.app.goo.gl/xGRWkw3g1c5X9JPd6"},
+  {name:"Porto Acre", address:"Porto Acre, Acre, 69921-000", maps:"https://maps.app.goo.gl/CYFdELdKAQ1XAGkP8"},
+  {name:"Pra Parte Alta", address:"R. João Francisco da Cunha, 39 - Conj Procom, Rio Branco - AC, 69918-632", maps:"https://maps.app.goo.gl/25wwXie6vogyE8az8"},
+  {name:"Rodrigues Alves", address:"Av. Projeto Rondon, 2-18, Rodrigues Alves - AC, 69985-000", maps:"https://maps.app.goo.gl/c9991Hv3q6eX1UdR8"},
+  {name:"Sobral", address:"R. Principal, 179-1 - Palheiral, Rio Branco - AC, 69903-830", maps:"https://maps.app.goo.gl/HEW8efJ7mD5EoLx49"},
+  {name:"Sena Madureira ( Cidade )", address:"R. Walter Wilton Maia, 169 - Sena Madureira, AC, 69940-000", maps:"https://maps.app.goo.gl/ZpW4qPWwk426BwQJ8"},
+  {name:"Sena Madureira ( Estrada )", address:"Sena Madureira, Acre", maps:"https://maps.app.goo.gl/bDMJo91eqv7noue3A"},
+  {name:"Senador Guiomard (Quinari)", address:"Sen. Guiomard, AC", maps:"https://maps.app.goo.gl/cTPPaNfiA1y8qiqn9"},
+  {name:"Tancredo Neves", address:"Estrada Raimundo Irineu Serra - Novo Horizonte, Rio Branco - AC, 69918-505", maps:"https://maps.app.goo.gl/BB4sHicRV9fFmL7p9"},
+  {name:"Tarauacá", address:"R. Floriano Peixoto, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/uZp1eHpGair9AqUW7"},
+  {name:"Trevo Rodrigues Alves", address:"BR-364, Cruzeiro do Sul - AC, 69980-000", maps:"https://maps.app.goo.gl/csPQGbGUHtxnhSCNA"},
+  {name:"Vila Caquetá", address:"BR-317, 20191 - Vila Caquetá, Sen. Guiomard - AC, 69925-000", maps:"https://maps.app.goo.gl/5s3hwEwwJhU17H9G7"},
+  {name:"Xapuri ( Cidade )", address:"R. Nações Unidas, 1143 - Centro, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/FV8RExFPezVrZMA69"},
+  {name:"Xapuri (Posto)", address:"Auto Posto Entroncamento Petrobras, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/1z6WPwejPAZ6iq369"},
+  {name:"Bom (placeholder)", address:"", maps:""}
+];
+
+/* Note: Some POP names / addresses were slightly normalized to avoid duplicates.
+   If quiser que eu ajuste ou remova entradas duplicadas/local strings, me diga. */
+
+/* ========== Injeção do select de POPs ========== */
+function populatePOP(){
+  const sel = document.getElementById('popSelect');
+  // ordenar por name
+  pops.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  pops.forEach(p=>{
+    const opt = document.createElement('option');
+    opt.value = p.name;
+    opt.dataset.address = p.address;
+    opt.dataset.maps = p.maps;
+    opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+}
+
+/* ========== Preenchimento POP -> endereço & maps ========== */
+document.addEventListener('change', function(e){
+  if(e.target && e.target.id === 'popSelect'){
+    const opt = e.target.selectedOptions[0];
+    if(!opt) return;
+    const address = opt.dataset.address || '';
+    const maps = opt.dataset.maps || '';
+    document.getElementById('endereco').value = address;
+    const locInput = document.getElementById('localizacao');
+    locInput.value = maps;
+    const link = document.getElementById('mapsLink');
+    if(maps){
+      link.href = maps;
+      link.style.pointerEvents = 'auto';
+      link.style.opacity = 1;
+    } else {
+      link.href = '#';
+      link.style.pointerEvents = 'none';
+      link.style.opacity = 0.5;
+    }
+  }
+});
+
+/* ========== Geração Nº OS automático por ano ========== */
+function gerarNumeroOS(){
+  const ano = new Date().getFullYear();
+  const key = 'os_counter_' + ano;
+  let counter = parseInt(localStorage.getItem(key) || '0', 10);
+  counter = counter + 1; // simula que a OS foi reservada
+  localStorage.setItem(key, counter.toString());
+  const numero = String(counter).padStart(3,'0') + '/' + ano;
+  document.getElementById('numeroOS').value = numero;
+}
+
+/* ========== Data/Hora e Horas preenchidas automaticamente ========== */
+function fillNowDateTime(){
+  const now = new Date();
+  // datetime-local expects format: YYYY-MM-DDTHH:MM
+  const pad = n=>String(n).padStart(2,'0');
+  const dtLocal = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+  document.getElementById('dataHora').value = dtLocal;
+}
+function fillHoraInicio(){
+  const now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  document.getElementById('horaInicio').value = pad(now.getHours()) + ':' + pad(now.getMinutes());
+}
+function fillHoraTermino(){
+  const now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  document.getElementById('horaTermino').value = pad(now.getHours()) + ':' + pad(now.getMinutes());
+}
+
+/* ========== Data estimada +3 meses ========== */
+function fillDataEstimadaPlus3(){
+  const hoje = new Date();
+  const dt = new Date(hoje);
+  dt.setMonth(dt.getMonth()+3);
+  // format YYYY-MM-DD
+  const pad = n=>String(n).padStart(2,'0');
+  const val = dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate());
+  document.getElementById('dataEstimada').value = val;
+}
+
+/* ========== Pré-visualização de imagens e armazenamento temporário ========== */
+const formImages = {}; // armazena dataURLs por input preview id
+
+function handleImageInputChange(input){
+  const previewId = input.dataset.preview;
+  const container = document.getElementById(previewId);
+  container.innerHTML = '';
+  const files = input.files;
+  if(!files || files.length===0) return;
+  for(let f of files){
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      const img = document.createElement('img');
+      img.src = ev.target.result;
+      container.appendChild(img);
+      // armazenar
+      if(!formImages[previewId]) formImages[previewId] = [];
+      formImages[previewId].push(ev.target.result);
+    };
+    reader.readAsDataURL(f);
+  }
+}
+
+/* Add event listeners to inputs tipo file (delegado) */
+document.addEventListener('change', function(e){
+  if(e.target && e.target.classList && e.target.classList.contains('imgInput')){
+    handleImageInputChange(e.target);
+  }
+});
+
+/* ========== Assinaturas (Canvas) ========== */
+function initSignatureCanvas(id){
+  const canvas = document.getElementById(id);
+  const ctx = canvas.getContext('2d');
+  resizeCanvasToDisplaySize(canvas);
+  ctx.strokeStyle = '#111';
+  ctx.lineWidth = 2.0;
+  let drawing = false;
+  let lastX=0, lastY=0;
+
+  function getPointer(e){
+    const rect = canvas.getBoundingClientRect();
+    let clientX, clientY;
+    if(e.touches){
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    return {x: clientX - rect.left, y: clientY - rect.top};
+  }
+  function start(e){
+    drawing = true;
+    const p = getPointer(e);
+    lastX = p.x; lastY = p.y;
+    e.preventDefault();
+  }
+  function move(e){
+    if(!drawing) return;
+    const p = getPointer(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    lastX = p.x; lastY = p.y;
+    e.preventDefault();
+  }
+  function stop(e){
+    drawing = false;
+    e.preventDefault();
+  }
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', stop);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', stop);
+
+  // return helper functions
+  return {
+    clear: function(){ ctx.clearRect(0,0,canvas.width,canvas.height); },
+    toDataURL: function(){ return canvas.toDataURL('image/png'); }
+  };
+}
+function resizeCanvasToDisplaySize(canvas){
+  // adapta para dispositivo de forma simples
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+}
+function clearSig(id){
+  const c = document.getElementById(id);
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  // limpar preview
+  if(id==='sigTech') document.getElementById('sigTechPreview').innerHTML='';
+  if(id==='sigResp') document.getElementById('sigRespPreview').innerHTML='';
+  if(id==='sigTechImg') document.getElementById('sigTechImg').value='';
+  if(id==='sigRespImg') document.getElementById('sigRespImg').value='';
+}
+function saveSig(canvasId, hiddenInputId){
+  const c = document.getElementById(canvasId);
+  const data = c.toDataURL('image/png');
+  document.getElementById(hiddenInputId).value = data;
+  const previewId = (canvasId==='sigTech') ? 'sigTechPreview' : 'sigRespPreview';
+  document.getElementById(previewId).innerHTML = '<img src="'+data+'" style="max-width:220px; border:1px solid #ccc; border-radius:6px;" />';
+}
+
+/* ========== Salvar rascunho local (localStorage) ========== */
+function gatherFormData(){
+  const form = document.getElementById('osForm');
+  const data = {};
+  const fd = new FormData(form);
+  // campos básicos
+  data.numeroOS = document.getElementById('numeroOS').value;
+  data.dataHora = document.getElementById('dataHora').value;
+  data.horaInicio = document.getElementById('horaInicio').value;
+  data.horaTermino = document.getElementById('horaTermino').value;
+  data.pop = document.getElementById('popSelect').value;
+  data.endereco = document.getElementById('endereco').value;
+  data.localizacao = document.getElementById('localizacao').value;
+  data.dataEstimada = document.getElementById('dataEstimada').value;
+
+  // assinaturas
+  data.sigTech = document.getElementById('sigTechImg').value || null;
+  data.sigResp = document.getElementById('sigRespImg').value || null;
+
+  // imagens: copiar do formImages
+  data.images = JSON.parse(JSON.stringify(formImages));
+
+  // demais campos (usando names)
+  const names = ['limpeza_rack_status','limpeza_rack_obs','cabos_status','cabos_obs',
+                 'temp_status','temp_obs','vent_status','vent_obs','porta_status','porta_obs',
+                 'id_equip_status','id_equip_obs','olt_status','olt_obs','sw_status','sw_obs',
+                 'ret_status','ret_obs','acoes_realizadas','observacoes_recomendacoes'];
+  names.forEach(n=>{
+    data[n] = fd.getAll(n).join(', ') || fd.get(n) || '';
+  });
+  return data;
+}
+
+function saveDraft(){
+  const obj = gatherFormData();
+  const listKey = 'os_saved_list';
+  let list = JSON.parse(localStorage.getItem(listKey) || '[]');
+  list.push(obj);
+  localStorage.setItem(listKey, JSON.stringify(list));
+  alert('Rascunho salvo localmente.');
+}
+
+/* ========== Gerar, salvar (simulado) e imprimir ========== */
+function generateAndPrint(){
+  // preenche horaTermino automaticamente
+  fillHoraTermino();
+
+  // coletar dados
+  const obj = gatherFormData();
+
+  // salvar no localStorage como registro (simulação do salvamento no Google Docs)
+  const listKey = 'os_saved_list';
+  let list = JSON.parse(localStorage.getItem(listKey) || '[]');
+  list.push(obj);
+  localStorage.setItem(listKey, JSON.stringify(list));
+
+  // atualiza contador do ano para próxima OS (incrementa)
+  const ano = new Date().getFullYear();
+  const key = 'os_counter_' + ano;
+  const cur = parseInt(localStorage.getItem(key) || '0',10);
+  if(!isNaN(cur)){
+    localStorage.setItem(key, String(cur)); // já incrementado quando abriu, mantemos
+  }
+
+  // abre print
+  setTimeout(()=> window.print(), 300);
+}
+
+/* ========== Inicialização ========== */
+window.addEventListener('load', function(){
+  document.getElementById('btnUseNow').addEventListener('click', function(){
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const dtLocal = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+    document.getElementById('dataHora').value = dtLocal;
+  });
+});
+window.addEventListener('load', function(){
+  populatePOP();
+  gerarNumeroOS();
+  fillNowDateTime();
+  fillHoraInicio();
+  fillDataEstimadaPlus3();
+
+  // botão usar agora dataHora
+  document.getElementById('btnUseNow').addEventListener('click', function(){
+    fillNowDateTime();
+  });
+
+  // ao mudar o map link se vazio, desabilitar
+  const link = document.getElementById('mapsLink');
+  if(link.href === '#' || !document.getElementById('localizacao').value) link.style.opacity=0.5;
+
+  // inicializar canvas assinaturas
+  initSignatureCanvas('sigTech');
+  initSignatureCanvas('sigResp');
+});
+</script>
+</body>
+</html>
