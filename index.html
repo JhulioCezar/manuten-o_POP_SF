@@ -690,34 +690,71 @@ function fillDataEstimadaPlus3(){
   document.getElementById('dataEstimada').value = val;
 }
 
-/* ========== Pré-visualização de imagens e armazenamento temporário ========== */
+/* ========== Pré-visualização de imagens e COMPRESSÃO ========== */
 const formImages = {}; // armazena dataURLs por input preview id
 
-function handleImageInputChange(input){
-  const previewId = input.dataset.preview;
-  const container = document.getElementById(previewId);
-  container.innerHTML = '';
-  const files = input.files;
-  if(!files || files.length===0) return;
-  for(let f of files){
-    const reader = new FileReader();
-    reader.onload = function(ev){
-      const img = document.createElement('img');
-      img.src = ev.target.result;
-      container.appendChild(img);
-      // armazenar
-      if(!formImages[previewId]) formImages[previewId] = [];
-      formImages[previewId].push(ev.target.result);
-    };
-    reader.readAsDataURL(f);
-  }
+function handleImageInputChange(input) {
+    const previewId = input.dataset.preview;
+    const container = document.getElementById(previewId);
+    container.innerHTML = '';
+    formImages[previewId] = []; // Limpa o array de imagens para este item
+    const files = input.files;
+    if (!files || files.length === 0) return;
+
+    // Definições de Compressão
+    const MAX_WIDTH = 800; // Largura máxima (pixels)
+    const QUALITY = 0.7; // Qualidade do JPEG (0.7 = 70%)
+
+    for (let f of files) {
+        const reader = new FileReader();
+        
+        reader.onload = function(ev) {
+            const img = new Image();
+            img.src = ev.target.result;
+            
+            img.onload = function() {
+                // Processo de compressão
+                let width = img.width;
+                let height = img.height;
+
+                // Redimensiona se for maior que o máximo
+                if (width > MAX_WIDTH) {
+                    height = height * (MAX_WIDTH / width);
+                    width = MAX_WIDTH;
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                
+                // Desenha a imagem redimensionada no canvas
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Converte o canvas para JPEG com qualidade definida
+                const dataUrl = canvas.toDataURL('image/jpeg', QUALITY);
+
+                // --- Fim da Compressão ---
+
+                // Criar a imagem de preview (igual a antes)
+                const previewImg = document.createElement('img');
+                previewImg.src = dataUrl;
+                container.appendChild(previewImg);
+                
+                // Armazenar o dataUrl COMPRIMIDO
+                if (!formImages[previewId]) formImages[previewId] = [];
+                formImages[previewId].push(dataUrl);
+            };
+        };
+        reader.readAsDataURL(f);
+    }
 }
 
-/* Add event listeners to inputs tipo file (delegado) */
+// O 'event listener' delegado (não precisa mudar, já deve existir)
 document.addEventListener('change', function(e){
-  if(e.target && e.target.classList && e.target.classList.contains('imgInput')){
-    handleImageInputChange(e.target);
-  }
+  if(e.target && e.target.classList && e.target.classList.contains('imgInput')){
+    handleImageInputChange(e.target);
+  }
 });
 
 /* ========== Assinaturas (Canvas) ========== */
