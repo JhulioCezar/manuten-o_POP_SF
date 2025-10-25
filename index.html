@@ -887,7 +887,7 @@ function saveSig(canvasId, hiddenInputId){
   const c = document.getElementById(canvasId);
   
   // Comprime a assinatura para JPEG (qualidade 0.8)
-  const data = c.toDataURL('image/jpeg', 0.8); 
+  const data = c.toDataURL('image/png', 0.8); 
   
   document.getElementById(hiddenInputId).value = data;
   const previewId = (canvasId==='sigTech') ? 'sigTechPreview' : 'sigRespPreview';
