@@ -720,16 +720,15 @@ function fillDataEstimadaPlus3(){
 /* ========== Pré-visualização, Compressão e Botão Apagar (v4.1) ========== */
 const formImages = {}; 
 
+/* ========== Pré-visualização, Compressão e MÚLTIPLAS Imagens (v4.2) ========== */
+// A linha "const formImages = {};" (linha 318) deve ficar ACIMA desta função
+
 function handleImageInputChange(input) {
     const previewId = input.dataset.preview;
     const container = document.getElementById(previewId);
     
-    // Não limpa mais o HTML. Apenas limpa o array se for uma nova seleção
-    if (!formImages[previewId] || input.files.length > 0) {
-       // Se o usuário está selecionando novos arquivos, limpamos o preview e o array
-       container.innerHTML = ''; 
-       formImages[previewId] = [];
-    }
+    // ✅ CORREÇÃO (Seu 3º Erro): Removida a lógica 'if' que limpava
+    // o container e o array. Agora as imagens são sempre ADICIONADAS.
 
     const files = input.files;
     if (!files || files.length === 0) return;
@@ -739,56 +738,67 @@ function handleImageInputChange(input) {
 
     for (let i = 0; i < files.length; i++) {
         const f = files[i];
-        const reader = new FileReader();
         
-        reader.onload = function(ev) {
-            const img = new Image();
-            img.src = ev.target.result;
+        // Usamos uma IIFE para garantir que cada 'f' seja processado
+        // corretamente no loop assíncrono.
+        (function(file) {
+            const reader = new FileReader();
             
-            img.onload = function() {
-                let width = img.width;
-                let height = img.height;
-
-                if (width > MAX_WIDTH) {
-                    height = height * (MAX_WIDTH / width);
-                    width = MAX_WIDTH;
-                }
-
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
+            reader.onload = function(ev) {
+                const img = new Image();
+                img.src = ev.target.result;
                 
-                const dataUrl = canvas.toDataURL('image/jpeg', QUALITY);
-                
-                // Armazena o dataUrl COMPRIMIDO no array
-                if (!formImages[previewId]) formImages[previewId] = [];
-                const imageIndex = formImages[previewId].push(dataUrl) - 1; // Pega o índice da nova imagem
+                img.onload = function() {
+                    let width = img.width;
+                    let height = img.height;
 
-                // --- Novo Preview com Botão Apagar ---
-                const wrapper = document.createElement('div');
-                wrapper.className = 'photo-preview-item';
-                wrapper.id = `img-${previewId}-${imageIndex}`; // ID único para o wrapper
+                    if (width > MAX_WIDTH) {
+                        height = height * (MAX_WIDTH / width);
+                        width = MAX_WIDTH;
+                    }
 
-                const previewImg = document.createElement('img');
-                previewImg.src = dataUrl;
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.type = 'button';
-                deleteBtn.className = 'delete-img-btn';
-                deleteBtn.innerHTML = '&times;';
-                // Chama a função deleteImage, passando o ID do preview e o índice no array
-                deleteBtn.onclick = function() { deleteImage(previewId, imageIndex); };
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const dataUrl = canvas.toDataURL('image/jpeg', QUALITY);
+                    
+                    // ✅ CORREÇÃO: Garante que o array existe
+                    if (!formImages[previewId]) {
+                        formImages[previewId] = [];
+                    }
+                    
+                    // Adiciona o dataUrl COMPRIMIDO no array
+                    const imageIndex = formImages[previewId].push(dataUrl) - 1; // Pega o índice da nova imagem
 
-                wrapper.appendChild(previewImg);
-                wrapper.appendChild(deleteBtn);
-                container.appendChild(wrapper);
-                // --- Fim do Novo Preview ---
+                    // --- Preview com Botão Apagar (v4.1) ---
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'photo-preview-item';
+                    wrapper.id = `img-${previewId}-${imageIndex}`; // ID único
+
+                    const previewImg = document.createElement('img');
+                    previewImg.src = dataUrl;
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.type = 'button';
+                    deleteBtn.className = 'delete-img-btn';
+                    deleteBtn.innerHTML = '&times;';
+                    // As funções deleteImage e saveSig estão corretas e não precisam ser mexidas.
+                    deleteBtn.onclick = function() { deleteImage(previewId, imageIndex); };
+
+                    wrapper.appendChild(previewImg);
+                    wrapper.appendChild(deleteBtn);
+                    container.appendChild(wrapper); // Adiciona ao container
+                };
             };
-        };
-        reader.readAsDataURL(f);
+            reader.readAsDataURL(file);
+        })(f); // Passa 'f' para a IIFE
     }
+    
+    // Limpa o valor do input para permitir selecionar o mesmo arquivo novamente
+    input.value = null;
 }
 
 // O 'event listener' delegado (não precisa mudar, já deve existir)
