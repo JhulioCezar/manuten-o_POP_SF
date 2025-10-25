@@ -122,6 +122,33 @@
     	border: none;
   }
 
+/* Estilo para o container de preview e botão apagar */
+  .photo-preview-item {
+    position: relative;
+    display: inline-block;
+    margin-right: 8px; /* Espaçamento da v4.0 */
+  }
+  .photo-preview-item img {
+    width: 110px; height: 80px; object-fit: cover;
+    border-radius: 6px; border: 1px solid #ccc;
+  }
+  .delete-img-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #DB4437;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 20px;
+    text-align: center;
+    padding: 0;
+  }
 
   @media print{
     body{padding:0}
@@ -222,7 +249,7 @@
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
               <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview1" class="imgInput">
+              <input type="file" accept="image/*" capture="environment" data-preview="preview1" class="imgInput" multiple>
             </div>
             <div id="preview1" class="photo-preview"></div>
           </div>
@@ -247,7 +274,7 @@
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
               <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview2" class="imgInput">
+              <input type="file" accept="image/*" capture="environment" data-preview="preview2" class="imgInput" multiple>
             </div>
             <div id="preview2" class="photo-preview"></div>
           </div>
@@ -272,7 +299,7 @@
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
               <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview3" class="imgInput">
+              <input type="file" accept="image/*" capture="environment" data-preview="preview3" class="imgInput" multiple>
             </div>
             <div id="preview3" class="photo-preview"></div>
           </div>
@@ -296,7 +323,7 @@
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
               <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview4" class="imgInput">
+              <input type="file" accept="image/*" capture="environment" data-preview="preview4" class="imgInput" multiple>
             </div>
             <div id="preview4" class="photo-preview"></div>
           </div>
@@ -320,7 +347,7 @@
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
               <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview5" class="imgInput">
+              <input type="file" accept="image/*" capture="environment" data-preview="preview5" class="imgInput" multiple>
             </div>
             <div id="preview5" class="photo-preview"></div>
           </div>
@@ -344,7 +371,7 @@
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
               <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview6" class="imgInput">
+              <input type="file" accept="image/*" capture="environment" data-preview="preview6" class="imgInput" multiple>
             </div>
             <div id="preview6" class="photo-preview"></div>
           </div>
@@ -373,7 +400,7 @@
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
               <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview7" class="imgInput">
+              <input type="file" accept="image/*" capture="environment" data-preview="preview7" class="imgInput" multiple>
             </div>
             <div id="preview7" class="photo-preview"></div>
           </div>
@@ -396,7 +423,7 @@
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
               <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview8" class="imgInput">
+              <input type="file" accept="image/*" capture="environment" data-preview="preview8" class="imgInput" multiple>
             </div>
             <div id="preview8" class="photo-preview"></div>
           </div>
@@ -419,7 +446,7 @@
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
               <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview9" class="imgInput">
+              <input type="file" accept="image/*" capture="environment" data-preview="preview9" class="imgInput" multiple>
             </div>
             <div id="preview9" class="photo-preview"></div>
           </div>
@@ -690,22 +717,28 @@ function fillDataEstimadaPlus3(){
   document.getElementById('dataEstimada').value = val;
 }
 
-/* ========== Pré-visualização de imagens e COMPRESSÃO ========== */
-const formImages = {}; // armazena dataURLs por input preview id
+/* ========== Pré-visualização, Compressão e Botão Apagar (v4.1) ========== */
+const formImages = {}; 
 
 function handleImageInputChange(input) {
     const previewId = input.dataset.preview;
     const container = document.getElementById(previewId);
-    container.innerHTML = '';
-    formImages[previewId] = []; // Limpa o array de imagens para este item
+    
+    // Não limpa mais o HTML. Apenas limpa o array se for uma nova seleção
+    if (!formImages[previewId] || input.files.length > 0) {
+       // Se o usuário está selecionando novos arquivos, limpamos o preview e o array
+       container.innerHTML = ''; 
+       formImages[previewId] = [];
+    }
+
     const files = input.files;
     if (!files || files.length === 0) return;
 
-    // Definições de Compressão
-    const MAX_WIDTH = 800; // Largura máxima (pixels)
-    const QUALITY = 0.7; // Qualidade do JPEG (0.7 = 70%)
+    const MAX_WIDTH = 800;
+    const QUALITY = 0.7;
 
-    for (let f of files) {
+    for (let i = 0; i < files.length; i++) {
+        const f = files[i];
         const reader = new FileReader();
         
         reader.onload = function(ev) {
@@ -713,11 +746,9 @@ function handleImageInputChange(input) {
             img.src = ev.target.result;
             
             img.onload = function() {
-                // Processo de compressão
                 let width = img.width;
                 let height = img.height;
 
-                // Redimensiona se for maior que o máximo
                 if (width > MAX_WIDTH) {
                     height = height * (MAX_WIDTH / width);
                     width = MAX_WIDTH;
@@ -727,23 +758,33 @@ function handleImageInputChange(input) {
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
-                
-                // Desenha a imagem redimensionada no canvas
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // Converte o canvas para JPEG com qualidade definida
                 const dataUrl = canvas.toDataURL('image/jpeg', QUALITY);
+                
+                // Armazena o dataUrl COMPRIMIDO no array
+                if (!formImages[previewId]) formImages[previewId] = [];
+                const imageIndex = formImages[previewId].push(dataUrl) - 1; // Pega o índice da nova imagem
 
-                // --- Fim da Compressão ---
+                // --- Novo Preview com Botão Apagar ---
+                const wrapper = document.createElement('div');
+                wrapper.className = 'photo-preview-item';
+                wrapper.id = `img-${previewId}-${imageIndex}`; // ID único para o wrapper
 
-                // Criar a imagem de preview (igual a antes)
                 const previewImg = document.createElement('img');
                 previewImg.src = dataUrl;
-                container.appendChild(previewImg);
                 
-                // Armazenar o dataUrl COMPRIMIDO
-                if (!formImages[previewId]) formImages[previewId] = [];
-                formImages[previewId].push(dataUrl);
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'delete-img-btn';
+                deleteBtn.innerHTML = '&times;';
+                // Chama a função deleteImage, passando o ID do preview e o índice no array
+                deleteBtn.onclick = function() { deleteImage(previewId, imageIndex); };
+
+                wrapper.appendChild(previewImg);
+                wrapper.appendChild(deleteBtn);
+                container.appendChild(wrapper);
+                // --- Fim do Novo Preview ---
             };
         };
         reader.readAsDataURL(f);
@@ -831,14 +872,17 @@ function clearSig(id){
   if(id==='sigTechImg') document.getElementById('sigTechImg').value='';
   if(id==='sigRespImg') document.getElementById('sigRespImg').value='';
 }
+/* ========== (MODIFICADO) Salvar Assinatura (com Compressão JPEG) ========== */
 function saveSig(canvasId, hiddenInputId){
-  const c = document.getElementById(canvasId);
-  const data = c.toDataURL('image/png');
-  document.getElementById(hiddenInputId).value = data;
-  const previewId = (canvasId==='sigTech') ? 'sigTechPreview' : 'sigRespPreview';
-  document.getElementById(previewId).innerHTML = '<img src="'+data+'" style="max-width:220px; border:1px solid #ccc; border-radius:6px;" />';
+  const c = document.getElementById(canvasId);
+  
+  // Comprime a assinatura para JPEG (qualidade 0.8)
+  const data = c.toDataURL('image/jpeg', 0.8); 
+  
+  document.getElementById(hiddenInputId).value = data;
+  const previewId = (canvasId==='sigTech') ? 'sigTechPreview' : 'sigRespPreview';
+  document.getElementById(previewId).innerHTML = '<img src="'+data+'" style="max-width:220px; border:1px solid #ccc; border-radius:6px;" />';
 }
-
 /* ========== Salvar rascunho local (localStorage) ========== */
 function gatherFormData(){
   const form = document.getElementById('osForm');
@@ -938,6 +982,20 @@ window.addEventListener('load', function(){
   initSignatureCanvas('sigTech');
   initSignatureCanvas('sigResp');
 });
+/* ========== (NOVO) Apagar Imagem Individual ========== */
+function deleteImage(previewId, index) {
+    // 1. Remove a imagem do array de dados
+    // Colocamos 'null' em vez de usar splice() para não bagunçar os índices
+    if (formImages[previewId] && formImages[previewId][index]) {
+        formImages[previewId][index] = null; 
+    }
+    
+    // 2. Remove o elemento (imagem + botão) da tela
+    const wrapper = document.getElementById(`img-${previewId}-${index}`);
+    if (wrapper) {
+        wrapper.parentNode.removeChild(wrapper);
+    }
+}
 </script>
 </body>
 </html>
