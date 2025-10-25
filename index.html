@@ -122,6 +122,7 @@
     	border: none;
   }
 
+
   @media print{
     body{padding:0}
     .btn, .no-print{display:none!important}
@@ -172,7 +173,10 @@
 
       <!-- POP e Endereço -->
       <div class="section">
-        <h2>Local (POP) / Endereço / Localização</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <h2 style="margin: 0;">Local (POP) / Endereço / Localização</h2>
+                    <button type="button" class="btn secondary no-print" style="padding: 6px 10px; font-size: 0.9rem;" onclick="clearPopFields()">Limpar</button>
+        </div>
         <div class="row">
           <div class="col">
             <label>Local (POP)</label>
@@ -183,13 +187,13 @@
 
           <div class="col">
             <label>Endereço</label>
-            <input type="text" id="endereco" />
+            <input type="text" id="endereco" autocomplete="off" />
           </div>
 
           <div class="col">
             <label>Localização (Google Maps)</label>
             <div style="display:flex; gap:8px; align-items:center;">
-              <input type="text" id="localizacao" readonly />
+              <input type="text" id="localizacao" readonly autocomplete="off" />
               <a id="mapsLink" href="#" target="_blank" style="display:inline-block; padding:8px 10px; background:#e9ecef; border-radius:8px; text-decoration:none;">Abrir</a>
             </div>
           </div>
@@ -212,7 +216,7 @@
               </select>
             </div>
           </div>
-          label>Observações</label>
+          <label>Observações</label>
           <textarea name="limpeza_rack_obs" placeholder="Observações..."></textarea>
           <div style="margin-top:8px;">
             <label>Imagem de comprovação</label>
@@ -521,6 +525,44 @@ const pops = [
 /* Note: Some POP names / addresses were slightly normalized to avoid duplicates.
    If quiser que eu ajuste ou remova entradas duplicadas/local strings, me diga. */
 
+ /* ========== Função de Upload para o Google Apps Script ========== */
+async function uploadData(data) {
+    // !IMPORTANTE! Cole a URL do seu script publicado (do Passo 3) aqui
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6SsmKmhrfYa6FL271khWABWReOc19MdxTxUoSFYE2C19lLZIzC7I8ijzMqhM2nsK_/exec";
+
+    // Mostra um feedback para o usuário no botão
+    const btn = document.querySelector('button[onclick="generateAndPrint()"]');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'cors', // Necessário para chamadas de scripts
+            // Apps Script lida melhor com text/plain para JSONs grandes
+            headers: { 'Content-Type': 'text/plain' }, 
+            body: JSON.stringify(data) // Envia todos os dados como um texto JSON
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            alert('OS salva com sucesso! URL da pasta: ' + result.folderUrl);
+        } else {
+            throw new Error(result.message || 'Erro desconhecido no Apps Script.');
+        }
+
+    } catch (error) {
+        console.error("Erro no envio:", error);
+        alert('Falha ao salvar no Google Drive. Verifique o console.\nErro: ' + error.message);
+    } finally {
+        // Restaura o botão
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+}
+
 /* ========== Injeção do select de POPs ========== */
 function populatePOP(){
   const sel = document.getElementById('popSelect');
@@ -535,6 +577,53 @@ function populatePOP(){
     sel.appendChild(opt);
   });
 }
+
+/* ========== Limpar Campos do POP ========== */
+function clearPopFields() {
+    document.getElementById('popSelect').value = ""; // Reseta o select
+    document.getElementById('endereco').value = ""; // Limpa endereço
+    document.getElementById('localizacao').value = ""; // Limpa localização
+
+    // Desabilita e reseta o link "Abrir"
+    const link = document.getElementById('mapsLink');
+    link.href = '#';
+    link.style.pointerEvents = 'none';
+    link.style.opacity = 0.5;
+}
+
+/* ========== Autopreencher Observações com "OK" ========== */
+document.addEventListener('change', function(e) {
+    // 1. Verificar se o que mudou foi um <select> e se o 'name' dele termina com '_status'
+    // (ex: 'limpeza_rack_status', 'cabos_status', 'olt_status', etc.)
+    const target = e.target;
+    if (target.tagName === 'SELECT' && target.name && target.name.endsWith('_status')) {
+        
+        // 2. Encontrar o container ".item" onde o select está
+        const item = target.closest('.item');
+        if (!item) return; // Sair se não encontrar o item (pouco provável)
+
+        // 3. Encontrar o campo de observação (seja textarea OU input) dentro deste item
+        // Ele vai procurar por name$="_obs" (que termina com '_obs')
+        const obsField = item.querySelector('textarea[name$="_obs"], input[type="text"][name$="_obs"]');
+        if (!obsField) return; // Sair se não houver campo de observação
+
+        const autoFillText = "Conforme as normas técnicas exigidas";
+
+        // 4. Aplicar a lógica
+        if (target.value === 'ok') {
+            // Se o campo de observação estiver vazio, preenche
+            if (obsField.value.trim() === '') {
+                obsField.value = autoFillText;
+            }
+        } else {
+            // Se o usuário mudar para "Não OK" ou "Selecione",
+            // e o texto for *exatamente* o que colocamos, ele limpa o campo.
+            if (obsField.value.trim() === autoFillText) {
+                obsField.value = "";
+            }
+        }
+    }
+});
 
 /* ========== Preenchimento POP -> endereço & maps ========== */
 document.addEventListener('change', function(e){
@@ -761,6 +850,8 @@ function generateAndPrint(){
 
   // coletar dados
   const obj = gatherFormData();
+
+  uploadData(obj);
 
   // salvar no localStorage como registro (simulação do salvamento no Google Docs)
   const listKey = 'os_saved_list';
