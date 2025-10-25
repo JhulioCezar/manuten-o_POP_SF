@@ -548,7 +548,8 @@ async function uploadData(data) {
         const result = await response.json();
 
         if (result.status === 'success') {
-            alert('OS salva com sucesso! URL da pasta: ' + result.folderUrl);
+            // Agora recebemos a URL do Documento!
+            alert('Relatório da OS salvo com sucesso!\n\nDocumento: ' + result.docUrl);
         } else {
             throw new Error(result.message || 'Erro desconhecido no Apps Script.');
         }
