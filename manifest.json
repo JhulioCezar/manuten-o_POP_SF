@@ -1,0 +1,21 @@
+{
+  "name": "Sem Fronteiras - Formulários",
+  "short_name": "SF Formulários",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "description": "Formulários de Implantação e Ampliação da Sem Fronteiras.",
+  "icons": [
+    {
+      "src": "android-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "android-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
