@@ -554,7 +554,7 @@ const pops = [
  /* ========== Função de Upload para o Google Apps Script ========== */
 async function uploadData(data) {
     // !IMPORTANTE! Cole a URL do seu script publicado (do Passo 3) aqui
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPE0AOWVQtzpaLtsNn2RP6djr3s4YB1ZTod8KDedRIipwDseDmqso55NzsnoNN48xl/exec";
+    const SCRIPT_URL = "https://cors-anywhere.herokuapp.com/https://script.google.com/macros/s/AKfycb.../exec";
 
     // Mostra um feedback para o usuário no botão
     const btn = document.querySelector('button[onclick="generateAndPrint()"]');
@@ -1006,6 +1006,7 @@ function deleteImage(previewId, index) {
 </script>
 </body>
 </html>
+
 
 
 
