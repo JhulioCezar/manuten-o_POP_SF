@@ -1,794 +1,1010 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Manutenção POP</title>
-    
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#2196f3"/>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Manutenção POP">
-    <meta name="description" content="Sistema para controle de manutenções preventivas e corretivas">
-    <meta name="keywords" content="manutenção, pop, preventiva, corretiva">
-    
-    <!-- Icons -->
-    <link rel="icon" type="image/png" href="android-icon-192x192.png">
-    <link rel="apple-touch-icon" href="android-icon-192x192.png">
-    
-    <!-- Manifest -->
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --primary-color: #2196f3;
-            --secondary-color: #ff9800;
-            --success-color: #4caf50;
-            --danger-color: #f44336;
-        }
-        
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding-bottom: 80px;
-        }
-        
-        .navbar-brand {
-            font-weight: 700;
-            color: var(--primary-color) !important;
-        }
-        
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            transition: transform 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .card-header {
-            background: linear-gradient(135deg, var(--primary-color), #1976d2);
-            color: white;
-            border-radius: 15px 15px 0 0 !important;
-            font-weight: 600;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color), #1976d2);
-            border: none;
-            border-radius: 25px;
-            padding: 10px 25px;
-            font-weight: 500;
-        }
-        
-        .btn-success {
-            background: linear-gradient(135deg, var(--success-color), #45a049);
-            border: none;
-            border-radius: 25px;
-            padding: 10px 25px;
-            font-weight: 500;
-        }
-        
-        .btn-warning {
-            background: linear-gradient(135deg, var(--secondary-color), #e68900);
-            border: none;
-            border-radius: 25px;
-            padding: 10px 25px;
-            font-weight: 500;
-        }
-        
-        .signature-pad {
-            border: 2px dashed #ccc;
-            border-radius: 10px;
-            background: #fafafa;
-            cursor: crosshair;
-        }
-        
-        .signature-pad:active {
-            cursor: crosshair;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .historico-item {
-            border-left: 4px solid var(--primary-color);
-            padding-left: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .status-badge {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .status-concluido {
-            background: #e8f5e8;
-            color: var(--success-color);
-        }
-        
-        .status-pendente {
-            background: #fff3e0;
-            color: var(--secondary-color);
-        }
-        
-        .tab-content {
-            background: white;
-            border-radius: 0 0 15px 15px;
-            padding: 25px;
-        }
-        
-        .nav-tabs .nav-link {
-            border: none;
-            color: #666;
-            font-weight: 500;
-            padding: 15px 25px;
-        }
-        
-        .nav-tabs .nav-link.active {
-            background: white;
-            color: var(--primary-color);
-            border-bottom: 3px solid var(--primary-color);
-        }
-        
-        .form-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .form-section h6 {
-            color: var(--primary-color);
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-        
-        .floating-action {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            z-index: 1000;
-        }
-        
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1055;
-        }
-        
-        .logo-container {
-            text-align: center;
-            padding: 20px 0;
-        }
-        
-        .logo {
-            max-width: 200px;
-            height: auto;
-        }
-        
-        .pwa-install-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 1000;
-        }
-    </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ordem de Serviço – Manutenção Preventiva POP</title>
+<style>
+  :root{
+    --primary:#0d6efd;
+    --bg:#f8f9fa;
+    --card:#fff;
+    --muted:#666;
+  }
+  *{box-sizing:border-box}
+  body{
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    margin:0;
+    background:var(--bg);
+    color:#222;
+    padding:20px 12px;
+  }
+  .container{
+    max-width:1100px;
+    margin:0 auto;
+  }
+  header{
+    background:#fff;
+    padding:12px 0;
+    text-align:center;
+    border-radius:10px;
+    margin-bottom:14px;
+  }
+  header img{width:220px; height:auto;}
+  h1{
+    text-align:center;
+    color:var(--primary);
+    margin:12px 0;
+    font-size:1.35rem;
+  }
+  form.card{
+    background:var(--card);
+    padding:18px;
+    border-radius:10px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.06);
+  }
+  .row{display:flex; gap:12px; flex-wrap:wrap;}
+  .col{flex:1; min-width:200px;}
+  label{display:block; font-weight:600; margin:8px 0 4px;}
+  input[type="text"], input[type="date"], input[type="time"], input[type="datetime-local"], textarea, select {
+    width:100%;
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    background:#fff;
+    font-size:0.95rem;
+  }
+  textarea{min-height:68px; resize:vertical;}
+  .small{max-width:140px;}
+  .section{
+    margin-top:18px;
+    padding-top:12px;
+    border-top:1px dashed #e6e6e6;
+  }
+  .section h2{color:var(--primary); margin:0 0 8px; font-size:1.05rem;}
+  .item{
+    background:#fafafa;
+    border:1px solid #eee;
+    padding:10px 12px;
+    margin-bottom:12px;
+    border-radius:8px;
+  }
+  .item-header{display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap;}
+  .item-header .title{font-weight:700;}
+  .photo-preview{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+  .photo-preview img{width:110px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #ccc;}
+  .sign-box{border:1px solid #ddd; border-radius:8px; padding:8px; background:#fff; text-align:center;}
+  .sign-canvas{border:1px dashed #bbb; border-radius:6px; width:100%; height:140px; touch-action: none; background:#fff;}
+  .btn{display:inline-block; padding:10px 14px; background:var(--primary); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:600;}
+  .btn.secondary{background:#6c757d;}
+  .meta{font-size:0.9rem; color:var(--muted)}
+  .footer-actions{display:flex; gap:12px; justify-content:flex-end; margin-top:18px; flex-wrap:wrap;}
+
+  /* 🔧 Correção de posição do botão "Usar agora" */
+  .datetime-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .datetime-group input[type="datetime-local"] {
+    flex: 1;
+    min-width: 0; /* evita que o input empurre o botão */
+  }
+  .datetime-group .btn {
+    white-space: nowrap;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+  }
+
+	/* Botão personalizado "Inserir" */
+  	.file-input-wrapper {
+    	position: relative;
+  	display: inline-block;
+  	}
+  	.file-input-wrapper input[type="file"] {
+    	position: absolute;
+    	left: 0;
+    	top: 0;
+    	opacity: 0;
+    	width: 100%;
+    	height: 100%;
+    	cursor: pointer;
+  	}
+  	.file-input-wrapper .custom-btn {
+    	display: inline-block;
+    	background: var(--primary);
+    	color: #fff;
+    	padding: 8px 14px;
+    	border-radius: 8px;
+    	font-weight: 600;
+    	font-size: 0.9rem;
+    	cursor: pointer;
+    	border: none;
+  }
+
+/* Estilo para o container de preview e botão apagar */
+  .photo-preview-item {
+    position: relative;
+    display: inline-block;
+    margin-right: 8px; /* Espaçamento da v4.0 */
+  }
+  .photo-preview-item img {
+    width: 110px; height: 80px; object-fit: cover;
+    border-radius: 6px; border: 1px solid #ccc;
+  }
+  .delete-img-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #DB4437;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 20px;
+    text-align: center;
+    padding: 0;
+  }
+
+  @media print{
+    body{padding:0}
+    .btn, .no-print{display:none!important}
+    header, form.card{box-shadow:none; border:none; border-radius:0}
+    .sign-canvas{border:none}
+  }
+</style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-tools me-2"></i>
-                Manutenção POP
-            </a>
-            <div class="navbar-nav ms-auto">
-                <span class="navbar-text">
-                    <i class="fas fa-sync-alt me-1"></i>
-                    <span id="last-sync">Nunca</span>
-                </span>
-            </div>
-        </div>
-    </nav>
+  <div class="container">
+    <header>
+      <img src="https://i.imgur.com/SEr4lkm.png" alt="Sem Fronteiras UltraFibra">
+    </header>
 
-    <div class="container mt-4">
-        <!-- Logo -->
-        <div class="logo-container">
-            <img src="https://i.imgur.com/SEr4lkm.png" alt="Logo" class="logo">
+    <h1>ORDEM DE SERVIÇO – MANUTENÇÃO PREVENTIVA POP</h1>
+
+    <form id="osForm" class="card" onsubmit="return false;">
+      <!-- Cabeçalho dados -->
+      <div class="row">
+        <div class="col">
+          <label>Nº da OS</label>
+          <input type="text" id="numeroOS" readonly />
+          <div class="meta">Formato: <strong>NNN/AAAA</strong> (gerado automaticamente)</div>
         </div>
 
-        <!-- Tabs -->
-        <ul class="nav nav-tabs nav-justified" id="mainTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="form-tab" data-bs-toggle="tab" data-bs-target="#form" type="button" role="tab">
-                    <i class="fas fa-plus-circle me-2"></i>Novo Relatório
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="historico-tab" data-bs-toggle="tab" data-bs-target="#historico" type="button" role="tab">
-                    <i class="fas fa-history me-2"></i>Histórico
-                </button>
-            </li>
-        </ul>
-
-        <div class="tab-content" id="mainTabsContent">
-            <!-- Form Tab -->
-            <div class="tab-pane fade show active" id="form" role="tabpanel">
-                <form id="formManutencao">
-                    <!-- Informações Gerais -->
-                    <div class="form-section">
-                        <h6><i class="fas fa-info-circle me-2"></i>Informações Gerais</h6>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Número da OS *</label>
-                                <input type="text" class="form-control" name="numeroOS" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Data e Hora *</label>
-                                <input type="datetime-local" class="form-control" name="dataHora" required>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Local (POP) *</label>
-                                <input type="text" class="form-control" name="pop" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Endereço *</label>
-                                <input type="text" class="form-control" name="endereco" required>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Hora de Início</label>
-                                <input type="time" class="form-control" name="horaInicio">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Hora de Término</label>
-                                <input type="time" class="form-control" name="horaTermino">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Verificação da Infraestrutura -->
-                    <div class="form-section">
-                        <h6><i class="fas fa-building me-2"></i>Verificação da Infraestrutura</h6>
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Limpeza do rack e equipamentos</label>
-                                <select class="form-control" name="limpeza_rack_status">
-                                    <option value="">Selecione...</option>
-                                    <option value="Concluído">Concluído</option>
-                                    <option value="Pendente">Pendente</option>
-                                    <option value="Não Aplicável">Não Aplicável</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Observações</label>
-                                <input type="text" class="form-control" name="limpeza_rack_obs" placeholder="Observações...">
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Organização dos cabos</label>
-                                <select class="form-control" name="cabos_status">
-                                    <option value="">Selecione...</option>
-                                    <option value="Concluído">Concluído</option>
-                                    <option value="Pendente">Pendente</option>
-                                    <option value="Não Aplicável">Não Aplicável</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Observações</label>
-                                <input type="text" class="form-control" name="cabos_obs" placeholder="Observações...">
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Temperatura ambiente</label>
-                                <select class="form-control" name="temp_status">
-                                    <option value="">Selecione...</option>
-                                    <option value="Concluído">Concluído</option>
-                                    <option value="Pendente">Pendente</option>
-                                    <option value="Não Aplicável">Não Aplicável</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Observações</label>
-                                <input type="text" class="form-control" name="temp_obs" placeholder="Observações...">
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Ventilação/ar-condicionado</label>
-                                <select class="form-control" name="vent_status">
-                                    <option value="">Selecione...</option>
-                                    <option value="Concluído">Concluído</option>
-                                    <option value="Pendente">Pendente</option>
-                                    <option value="Não Aplicável">Não Aplicável</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Observações</label>
-                                <input type="text" class="form-control" name="vent_obs" placeholder="Observações...">
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Porta e fechaduras</label>
-                                <select class="form-control" name="porta_status">
-                                    <option value="">Selecione...</option>
-                                    <option value="Concluído">Concluído</option>
-                                    <option value="Pendente">Pendente</option>
-                                    <option value="Não Aplicável">Não Aplicável</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Observações</label>
-                                <input type="text" class="form-control" name="porta_obs" placeholder="Observações...">
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Identificação de equipamentos</label>
-                                <select class="form-control" name="id_equip_status">
-                                    <option value="">Selecione...</option>
-                                    <option value="Concluído">Concluído</option>
-                                    <option value="Pendente">Pendente</option>
-                                    <option value="Não Aplicável">Não Aplicável</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Observações</label>
-                                <input type="text" class="form-control" name="id_equip_obs" placeholder="Observações...">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Assinaturas -->
-                    <div class="form-section">
-                        <h6><i class="fas fa-signature me-2"></i>Assinaturas</h6>
-                        
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label">Assinatura do Técnico</label>
-                                <div class="signature-pad" id="signaturePadTech" style="height: 150px;"></div>
-                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="clearSignature('tech')">
-                                    <i class="fas fa-eraser me-1"></i>Limpar
-                                </button>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Assinatura do Responsável</label>
-                                <div class="signature-pad" id="signaturePadResp" style="height: 150px;"></div>
-                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="clearSignature('resp')">
-                                    <i class="fas fa-eraser me-1"></i>Limpar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Botão Enviar -->
-                    <div class="text-center mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fas fa-paper-plane me-2"></i>Gerar Relatório PDF
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Histórico Tab -->
-            <div class="tab-pane fade" id="historico" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="mb-0">Histórico de Relatórios</h5>
-                    <button class="btn btn-outline-primary" onclick="app.carregarHistorico()">
-                        <i class="fas fa-sync-alt me-2"></i>Atualizar
-                    </button>
-                </div>
-                
-                <div id="loadingHistorico" class="loading">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Carregando...</span>
-                    </div>
-                    <p class="mt-2">Carregando relatórios...</p>
-                </div>
-                
-                <div id="historicoContainer"></div>
-            </div>
+        <div class="col">
+          <label>Data / Hora</label>
+          <!-- ✅ Trecho corrigido -->
+          <div class="datetime-group">
+            <input type="datetime-local" id="dataHora" />
+            <button type="button" id="btnUseNow" class="btn no-print">Usar agora</button>
+          </div>
+          <div class="meta">Você pode usar a data/hora atual ou editar manualmente.</div>
         </div>
-    </div>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999;">
-        <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
-            <div class="text-center">
-                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-                    <span class="visually-hidden">Processando...</span>
-                </div>
-                <h4 class="mt-3">Gerando PDF...</h4>
-                <p>Isso pode levar alguns segundos</p>
-            </div>
+        <div class="col">
+          <label>Hora Início</label>
+          <input type="time" id="horaInicio" />
+          <div class="meta">Preenchido automaticamente na abertura (editável)</div>
         </div>
-    </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container"></div>
+        <div class="col">
+          <label>Hora Término</label>
+          <input type="time" id="horaTermino" />
+          <div class="meta">Será preenchido automaticamente ao gerar/imprimir (editável)</div>
+        </div>
+      </div>
 
-    <!-- PWA Install Button -->
-    <div class="pwa-install-btn">
-        <button id="installButton" class="btn btn-success btn-sm" style="display: none;">
-            <i class="fas fa-download me-1"></i>Instalar App
-        </button>
-    </div>
+      <!-- POP e Endereço -->
+      <div class="section">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <h2 style="margin: 0;">Local (POP) / Endereço / Localização</h2>
+                    <button type="button" class="btn secondary no-print" style="padding: 6px 10px; font-size: 0.9rem;" onclick="clearPopFields()">Limpar</button>
+        </div>
+        <div class="row">
+          <div class="col">
+            <label>Local (POP)</label>
+            <select id="popSelect">
+              <option value="">-- Selecione o POP --</option>
+            </select>
+          </div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+          <div class="col">
+            <label>Endereço</label>
+            <input type="text" id="endereco" autocomplete="off" />
+          </div>
+
+          <div class="col">
+            <label>Localização (Google Maps)</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input type="text" id="localizacao" readonly autocomplete="off" />
+              <a id="mapsLink" href="#" target="_blank" style="display:inline-block; padding:8px 10px; background:#e9ecef; border-radius:8px; text-decoration:none;">Abrir</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção 1 -->
+      <div class="section">
+        <h2>1. Verificação da Infraestrutura e Condições Ambientais</h2>
+
+        <!-- Item exemplo: 1.1 -->
+        <div class="item">
+          <div class="item-header">
+            <div class="title">1.1 Limpeza do rack e equipamentos</div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <select name="limpeza_rack_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="limpeza_rack_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview1" class="imgInput" multiple>
+            </div>
+            <div id="preview1" class="photo-preview"></div>
+          </div>
+        </div>
+
+        <!-- Item 1.2 -->
+        <div class="item">
+          <div class="item-header">
+            <div class="title">1.2 Organização dos cabos e patch cords</div>
+            <div>
+              <select name="cabos_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="cabos_obs" placeholder="Observações..."></textarea>
+
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview2" class="imgInput" multiple>
+            </div>
+            <div id="preview2" class="photo-preview"></div>
+          </div>
+        </div>
+
+
+        <!-- Item 1.3 -->
+        <div class="item">
+          <div class="item-header">
+            <div class="title">1.3 Temperatura ambiente (°C)</div>
+            <div>
+              <select name="temp_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações / Valor (°C)</label>
+          <input type="text" name="temp_obs" placeholder="Ex: 24°C - Observações..." />
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview3" class="imgInput" multiple>
+            </div>
+            <div id="preview3" class="photo-preview"></div>
+          </div>
+        </div>
+
+        <!-- Item 1.4 -->
+        <div class="item">
+          <div class="item-header">
+            <div class="title">1.4 Ventilação / ar-condicionado</div>
+            <div>
+              <select name="vent_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="vent_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview4" class="imgInput" multiple>
+            </div>
+            <div id="preview4" class="photo-preview"></div>
+          </div>
+        </div>
+
+        <!-- Item 1.5 -->
+        <div class="item">
+          <div class="item-header">
+            <div class="title">1.5 Porta e fechaduras do POP</div>
+            <div>
+              <select name="porta_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="porta_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview5" class="imgInput" multiple>
+            </div>
+            <div id="preview5" class="photo-preview"></div>
+          </div>
+        </div>
+
+        <!-- Item 1.6 -->
+        <div class="item">
+          <div class="item-header">
+            <div class="title">1.6 Identificação de equipamentos e cabos</div>
+            <div>
+              <select name="id_equip_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="id_equip_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview6" class="imgInput" multiple>
+            </div>
+            <div id="preview6" class="photo-preview"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Seção 2 -->
+      <div class="section">
+        <h2>2. Manutenção dos Equipamentos Principais</h2>
+
+        <div class="item">
+          <div class="item-header">
+            <div class="title">2.1 OLT (Optical Line Terminal)</div>
+            <div>
+              <select name="olt_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="olt_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview7" class="imgInput" multiple>
+            </div>
+            <div id="preview7" class="photo-preview"></div>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="item-header">
+            <div class="title">2.2 Switch (SW)</div>
+            <div>
+              <select name="sw_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="sw_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview8" class="imgInput" multiple>
+            </div>
+            <div id="preview8" class="photo-preview"></div>
+          </div>
+        </div>
+
+        <div class="item">
+          <div class="item-header">
+            <div class="title">2.3 Retificadora e Baterias</div>
+            <div>
+              <select name="ret_status" class="small">
+                <option value="">Selecione</option>
+                <option value="ok">OK</option>
+                <option value="nao_ok">Não OK</option>
+              </select>
+            </div>
+          </div>
+          <label>Observações</label>
+          <textarea name="ret_obs" placeholder="Observações..."></textarea>
+          <div style="margin-top:8px;">
+            <label>Imagem de comprovação</label>
+            <div class="file-input-wrapper">
+              <button type="button" class="custom-btn">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview9" class="imgInput" multiple>
+            </div>
+            <div id="preview9" class="photo-preview"></div>
+          </div>
+        </div>
+
+      <!-- Seção 3 -->
+      <div class="section">
+        <h2>3. Ações Corretivas e Observações</h2>
+        <label>Ações realizadas</label>
+        <textarea name="acoes_realizadas"></textarea>
+
+        <label style="margin-top:8px;">Observações / Recomendações</label>
+        <textarea name="observacoes_recomendacoes"></textarea>
+      </div>
+
+      <!-- Próxima manutenção -->
+      <div class="section">
+        <h2>4. Próxima Manutenção</h2>
+        <label>Data estimada</label>
+        <input type="date" id="dataEstimada" />
+        <div class="meta">Preenchida automaticamente com +3 meses (editável)</div>
+      </div>
+
+      <!-- Assinaturas -->
+      <div class="section">
+        <h2>Assinaturas</h2>
+        <div class="row">
+          <div class="col">
+            <label>Assinatura do Técnico</label>
+            <div class="sign-box">
+              <canvas id="sigTech" class="sign-canvas"></canvas>
+              <div style="display:flex; gap:8px; margin-top:8px; justify-content:center;">
+                <button type="button" class="btn secondary no-print" onclick="clearSig('sigTech')">Limpar</button>
+                <button type="button" class="btn no-print" onclick="saveSig('sigTech','sigTechImg')">Salvar assinatura</button>
+              </div>
+              <input type="hidden" id="sigTechImg" />
+              <div id="sigTechPreview" style="margin-top:8px;"></div>
+            </div>
+          </div>
+
+          <div class="col">
+            <label>Assinatura do Responsável (Cliente/Supervisor)</label>
+            <div class="sign-box">
+              <canvas id="sigResp" class="sign-canvas"></canvas>
+              <div style="display:flex; gap:8px; margin-top:8px; justify-content:center;">
+                <button type="button" class="btn secondary no-print" onclick="clearSig('sigResp')">Limpar</button>
+                <button type="button" class="btn no-print" onclick="saveSig('sigResp','sigRespImg')">Salvar assinatura</button>
+              </div>
+              <input type="hidden" id="sigRespImg" />
+              <div id="sigRespPreview" style="margin-top:8px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ações -->
+      <div class="footer-actions no-print">
+        <button type="button" class="btn secondary" onclick="saveDraft()">Salvar (local)</button>
+        <button type="button" class="btn" onclick="generateAndPrint()">Gerar e Imprimir</button>
+      </div>
+    </form>
+  </div>
+
+<script>
+/* ========== Dados dos POPs (ordenados alfabeticamente) ========== */
+const pops = [
+  {name:"4 Bocas", address:"Br 364 km 25 sentido - Porto Velho, Rio Branco - AC, 69900-000", maps:"https://maps.app.goo.gl/iRFgi4HiX6qroz1X8"},
+  {name:"Acrelândia", address:"Acrelândia, Acre", maps:"https://maps.app.goo.gl/uAzxTA8C54GQtmTE8"},
+  {name:"Albert Sampaio", address:"Rodovia BR-364 Albert Sampaio, Rio Branco - AC, 69909-040", maps:"https://maps.app.goo.gl/1kQs6jH4PpJN8mKf8"},
+  {name:"Assis Brasil", address:"Ipiranga, Assis Brasil - AC, 69935-000", maps:"https://maps.app.goo.gl/zafXZppgL2Yae3Bu5"},
+  {name:"Belo Jardim", address:"Tv. Isaías, 208 - Belo Jardim I, Rio Branco - AC, 69907-848", maps:"https://maps.app.goo.gl/FnPmXhj7hSdbp6sA6"},
+  {name:"Benfica", address:"Benfica, Rio Branco, Acre", maps:"https://maps.app.goo.gl/6BLpDpxT9QFggr5eA"},
+  {name:"Bom Jesus", address:"Vila Acre, Rio Branco - AC", maps:"https://maps.app.goo.gl/7ARa5NroqG1rEUMq7"},
+  {name:"Bujari", address:"Bujari, AC, 69923-000", maps:"https://maps.app.goo.gl/gYnGmjFqhXHHL52aA"},
+  {name:"Calafate", address:"R. Abunã, 81 - Portal da Amazônia, Rio Branco - AC, 69915-840", maps:"https://maps.app.goo.gl/XeTCvk7LhbRCwkpNA"},
+  {name:"Capixaba", address:"Capixaba, AC, 69922-000", maps:"https://maps.app.goo.gl/T5aC4EG1VsuKBsDz5"},
+  {name:"Cidade do Povo", address:"Cidade do Povo, Rio Branco - AC, 69925-000", maps:"https://maps.app.goo.gl/c7ycJ1PGT3MFTDkn6"},
+  {name:"Data Center", address:"R. Bertioga, 131-61 - Vila Ivonete, Rio Branco - AC, 69914-570", maps:"https://maps.app.goo.gl/9oS3kq45e6Han7hH8"},
+  {name:"Esperança", address:"R. São José, 376 - Nova Esperança, Rio Branco - AC, 69915-202", maps:"https://maps.app.goo.gl/C4Veu4rWL7yH1mfy7"},
+  {name:"Feijó", address:"BR-364, 122, Feijó - AC, 69960-000", maps:"https://maps.app.goo.gl/3SSLGh2rvsDBFVn29"},
+  {name:"Liberdade", address:"BR-364, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/HjJkKVHR1Bcr1U2o7"},
+  {name:"Mâncio Lima", address:"R João B Rodrigues, 428 - Centro, Mâncio Lima - AC, 69900-970", maps:"https://maps.app.goo.gl/fG5f81v4jcBbiXcPA"},
+  {name:"Manoel Urbano", address:"Manoel Urbano, Acre", maps:"https://maps.app.goo.gl/7wEyk5Gj9RYn7aNw7"},
+  {name:"Maison Borges", address:"Distrito Industrial, Rio Branco - AC", maps:"https://maps.app.goo.gl/tMVds5Jq6mwRnEUF7"},
+  {name:"Part e Alta", address:"R. João Francisco da Cunha, 39 - Conj Procom, Rio Branco - AC, 69918-632", maps:"https://maps.app.goo.gl/25wwXie6vogyE8az8"},
+  {name:"Plácido de Castro", address:"R. Diamantino A De Macedo, 1112 - Plácido De Castro, Plácido de Castro - AC, 69928-000", maps:"https://maps.app.goo.gl/xGRWkw3g1c5X9JPd6"},
+  {name:"Porto Acre", address:"Porto Acre, Acre, 69921-000", maps:"https://maps.app.goo.gl/CYFdELdKAQ1XAGkP8"},
+  {name:"Pra Parte Alta", address:"R. João Francisco da Cunha, 39 - Conj Procom, Rio Branco - AC, 69918-632", maps:"https://maps.app.goo.gl/25wwXie6vogyE8az8"},
+  {name:"Rodrigues Alves", address:"Av. Projeto Rondon, 2-18, Rodrigues Alves - AC, 69985-000", maps:"https://maps.app.goo.gl/c9991Hv3q6eX1UdR8"},
+  {name:"Sobral", address:"R. Principal, 179-1 - Palheiral, Rio Branco - AC, 69903-830", maps:"https://maps.app.goo.gl/HEW8efJ7mD5EoLx49"},
+  {name:"Sena Madureira ( Cidade )", address:"R. Walter Wilton Maia, 169 - Sena Madureira, AC, 69940-000", maps:"https://maps.app.goo.gl/ZpW4qPWwk426BwQJ8"},
+  {name:"Sena Madureira ( Estrada )", address:"Sena Madureira, Acre", maps:"https://maps.app.goo.gl/bDMJo91eqv7noue3A"},
+  {name:"Senador Guiomard (Quinari)", address:"Sen. Guiomard, AC", maps:"https://maps.app.goo.gl/cTPPaNfiA1y8qiqn9"},
+  {name:"Tancredo Neves", address:"Estrada Raimundo Irineu Serra - Novo Horizonte, Rio Branco - AC, 69918-505", maps:"https://maps.app.goo.gl/BB4sHicRV9fFmL7p9"},
+  {name:"Tarauacá", address:"R. Floriano Peixoto, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/uZp1eHpGair9AqUW7"},
+  {name:"Trevo Rodrigues Alves", address:"BR-364, Cruzeiro do Sul - AC, 69980-000", maps:"https://maps.app.goo.gl/csPQGbGUHtxnhSCNA"},
+  {name:"Vila Caquetá", address:"BR-317, 20191 - Vila Caquetá, Sen. Guiomard - AC, 69925-000", maps:"https://maps.app.goo.gl/5s3hwEwwJhU17H9G7"},
+  {name:"Xapuri ( Cidade )", address:"R. Nações Unidas, 1143 - Centro, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/FV8RExFPezVrZMA69"},
+  {name:"Xapuri (Posto)", address:"Auto Posto Entroncamento Petrobras, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/1z6WPwejPAZ6iq369"},
+];
+
+/* Note: Some POP names / addresses were slightly normalized to avoid duplicates.
+   If quiser que eu ajuste ou remova entradas duplicadas/local strings, me diga. */
+
+ /* ========== Função de Upload para o Google Apps Script ========== */
+async function uploadData(data) {
+    // !IMPORTANTE! Cole a URL do seu script publicado (do Passo 3) aqui
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6SsmKmhrfYa6FL271khWABWReOc19MdxTxUoSFYE2C19lLZIzC7I8ijzMqhM2nsK_/exec";
+
+    // Mostra um feedback para o usuário no botão
+    const btn = document.querySelector('button[onclick="generateAndPrint()"]');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'cors', // Necessário para chamadas de scripts
+            // Apps Script lida melhor com text/plain para JSONs grandes
+            headers: { 'Content-Type': 'text/plain' }, 
+            body: JSON.stringify(data) // Envia todos os dados como um texto JSON
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+            // Agora recebemos a URL do Documento!
+            alert('Relatório da OS salvo com sucesso!\n\nDocumento: ' + result.docUrl);
+        } else {
+            throw new Error(result.message || 'Erro desconhecido no Apps Script.');
+        }
+
+    } catch (error) {
+        console.error("Erro no envio:", error);
+        alert('Falha ao salvar no Google Drive. Verifique o console.\nErro: ' + error.message);
+    } finally {
+        // Restaura o botão
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+}
+
+/* ========== Injeção do select de POPs ========== */
+function populatePOP(){
+  const sel = document.getElementById('popSelect');
+  // ordenar por name
+  pops.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  pops.forEach(p=>{
+    const opt = document.createElement('option');
+    opt.value = p.name;
+    opt.dataset.address = p.address;
+    opt.dataset.maps = p.maps;
+    opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+}
+
+/* ========== Limpar Campos do POP ========== */
+function clearPopFields() {
+    document.getElementById('popSelect').value = ""; // Reseta o select
+    document.getElementById('endereco').value = ""; // Limpa endereço
+    document.getElementById('localizacao').value = ""; // Limpa localização
+
+    // Desabilita e reseta o link "Abrir"
+    const link = document.getElementById('mapsLink');
+    link.href = '#';
+    link.style.pointerEvents = 'none';
+    link.style.opacity = 0.5;
+}
+
+/* ========== Autopreencher Observações com "OK" ========== */
+document.addEventListener('change', function(e) {
+    // 1. Verificar se o que mudou foi um <select> e se o 'name' dele termina com '_status'
+    // (ex: 'limpeza_rack_status', 'cabos_status', 'olt_status', etc.)
+    const target = e.target;
+    if (target.tagName === 'SELECT' && target.name && target.name.endsWith('_status')) {
+        
+        // 2. Encontrar o container ".item" onde o select está
+        const item = target.closest('.item');
+        if (!item) return; // Sair se não encontrar o item (pouco provável)
+
+        // 3. Encontrar o campo de observação (seja textarea OU input) dentro deste item
+        // Ele vai procurar por name$="_obs" (que termina com '_obs')
+        const obsField = item.querySelector('textarea[name$="_obs"], input[type="text"][name$="_obs"]');
+        if (!obsField) return; // Sair se não houver campo de observação
+
+        const autoFillText = "Conforme as normas técnicas exigidas";
+
+        // 4. Aplicar a lógica
+        if (target.value === 'ok') {
+            // Se o campo de observação estiver vazio, preenche
+            if (obsField.value.trim() === '') {
+                obsField.value = autoFillText;
+            }
+        } else {
+            // Se o usuário mudar para "Não OK" ou "Selecione",
+            // e o texto for *exatamente* o que colocamos, ele limpa o campo.
+            if (obsField.value.trim() === autoFillText) {
+                obsField.value = "";
+            }
+        }
+    }
+});
+
+/* ========== Preenchimento POP -> endereço & maps ========== */
+document.addEventListener('change', function(e){
+  if(e.target && e.target.id === 'popSelect'){
+    const opt = e.target.selectedOptions[0];
+    if(!opt) return;
+    const address = opt.dataset.address || '';
+    const maps = opt.dataset.maps || '';
+    document.getElementById('endereco').value = address;
+    const locInput = document.getElementById('localizacao');
+    locInput.value = maps;
+    const link = document.getElementById('mapsLink');
+    if(maps){
+      link.href = maps;
+      link.style.pointerEvents = 'auto';
+      link.style.opacity = 1;
+    } else {
+      link.href = '#';
+      link.style.pointerEvents = 'none';
+      link.style.opacity = 0.5;
+    }
+  }
+});
+
+/* ========== Geração Nº OS automático por ano ========== */
+function gerarNumeroOS(){
+  const ano = new Date().getFullYear();
+  const key = 'os_counter_' + ano;
+  let counter = parseInt(localStorage.getItem(key) || '0', 10);
+  counter = counter + 1; // simula que a OS foi reservada
+  localStorage.setItem(key, counter.toString());
+  const numero = String(counter).padStart(3,'0') + '/' + ano;
+  document.getElementById('numeroOS').value = numero;
+}
+
+/* ========== Data/Hora e Horas preenchidas automaticamente ========== */
+function fillNowDateTime(){
+  const now = new Date();
+  // datetime-local expects format: YYYY-MM-DDTHH:MM
+  const pad = n=>String(n).padStart(2,'0');
+  const dtLocal = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+  document.getElementById('dataHora').value = dtLocal;
+}
+function fillHoraInicio(){
+  const now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  document.getElementById('horaInicio').value = pad(now.getHours()) + ':' + pad(now.getMinutes());
+}
+function fillHoraTermino(){
+  const now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  document.getElementById('horaTermino').value = pad(now.getHours()) + ':' + pad(now.getMinutes());
+}
+
+/* ========== Data estimada +3 meses ========== */
+function fillDataEstimadaPlus3(){
+  const hoje = new Date();
+  const dt = new Date(hoje);
+  dt.setMonth(dt.getMonth()+3);
+  // format YYYY-MM-DD
+  const pad = n=>String(n).padStart(2,'0');
+  const val = dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate());
+  document.getElementById('dataEstimada').value = val;
+}
+
+/* ========== Pré-visualização, Compressão e Botão Apagar (v4.1) ========== */
+const formImages = {}; 
+
+/* ========== Pré-visualização, Compressão e MÚLTIPLAS Imagens (v4.2) ========== */
+// A linha "const formImages = {};" (linha 318) deve ficar ACIMA desta função
+
+function handleImageInputChange(input) {
+    const previewId = input.dataset.preview;
+    const container = document.getElementById(previewId);
     
-    <script>
-        // Configuração
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPE0AOWVQtzpaLtsNn2RP6djr3s4YB1ZTod8KDedRIipwDseDmqso55NzsnoNN48xl/exec'; // ATUALIZE ESTA URL
+    // ✅ CORREÇÃO (Seu 3º Erro): Removida a lógica 'if' que limpava
+    // o container e o array. Agora as imagens são sempre ADICIONADAS.
 
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(function(registration) {
-                        console.log('ServiceWorker registrado com sucesso: ', registration.scope);
-                    })
-                    .catch(function(error) {
-                        console.log('Falha no registro do ServiceWorker: ', error);
-                    });
-            });
-        }
+    const files = input.files;
+    if (!files || files.length === 0) return;
 
-        // PWA Install Prompt
-        let deferredPrompt;
-        const installButton = document.getElementById('installButton');
+    const MAX_WIDTH = 800;
+    const QUALITY = 0.7;
 
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installButton.style.display = 'block';
-        });
-
-        installButton.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    installButton.style.display = 'none';
-                }
-                deferredPrompt = null;
-            }
-        });
-
-        // Signature Pads
-        let signaturePadTech, signaturePadResp;
-
-        function initializeSignaturePads() {
-            const canvasTech = document.getElementById('signaturePadTech');
-            const canvasResp = document.getElementById('signaturePadResp');
+    for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        
+        // Usamos uma IIFE para garantir que cada 'f' seja processado
+        // corretamente no loop assíncrono.
+        (function(file) {
+            const reader = new FileReader();
             
-            signaturePadTech = new SignaturePad(canvasTech, {
-                backgroundColor: 'rgb(255, 255, 255)',
-                penColor: 'rgb(0, 0, 0)'
-            });
-            
-            signaturePadResp = new SignaturePad(canvasResp, {
-                backgroundColor: 'rgb(255, 255, 255)',
-                penColor: 'rgb(0, 0, 0)'
-            });
+            reader.onload = function(ev) {
+                const img = new Image();
+                img.src = ev.target.result;
+                
+                img.onload = function() {
+                    let width = img.width;
+                    let height = img.height;
 
-            // Ajustar canvas ao redimensionar
-            window.addEventListener('resize', () => {
-                signaturePadTech.clear();
-                signaturePadResp.clear();
-            });
-        }
+                    if (width > MAX_WIDTH) {
+                        height = height * (MAX_WIDTH / width);
+                        width = MAX_WIDTH;
+                    }
 
-        function clearSignature(type) {
-            if (type === 'tech') {
-                signaturePadTech.clear();
-            } else {
-                signaturePadResp.clear();
-            }
-        }
-
-        function getSignatureData(type) {
-            const pad = type === 'tech' ? signaturePadTech : signaturePadResp;
-            return pad.isEmpty() ? null : pad.toDataURL();
-        }
-
-        // API Service
-        class ManutencaoPOPService {
-            async enviarRelatorio(dadosRelatorio) {
-                try {
-                    const response = await fetch(APPS_SCRIPT_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(dadosRelatorio)
-                    });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
                     
-                    return await response.json();
-                } catch (error) {
-                    console.error('Erro ao enviar relatório:', error);
-                    return { status: "error", message: error.message };
-                }
-            }
-
-            async buscarRelatorios() {
-                try {
-                    const response = await fetch(`${APPS_SCRIPT_URL}?action=buscarRelatorios`);
-                    return await response.json();
-                } catch (error) {
-                    console.error('Erro ao buscar relatórios:', error);
-                    return [];
-                }
-            }
-        }
-
-        // Main App
-        class ManutencaoPOPApp {
-            constructor() {
-                this.apiService = new ManutencaoPOPService();
-                this.init();
-            }
-
-            init() {
-                this.configurarEventListeners();
-                this.carregarHistorico();
-                initializeSignaturePads();
-                this.atualizarUltimaSincronizacao();
-            }
-
-            async enviarFormulario(dadosFormulario) {
-                try {
-                    this.mostrarLoading(true);
+                    const dataUrl = canvas.toDataURL('image/jpeg', QUALITY);
                     
-                    // Adicionar assinaturas
-                    const sigTech = getSignatureData('tech');
-                    const sigResp = getSignatureData('resp');
-                    
-                    if (sigTech) dadosFormulario.sigTech = sigTech;
-                    if (sigResp) dadosFormulario.sigResp = sigResp;
-
-                    const resultado = await this.apiService.enviarRelatorio(dadosFormulario);
-                    
-                    if (resultado.status === "success") {
-                        this.mostrarToast('✅ Relatório salvo com sucesso! PDF gerado.', 'success');
-                        this.mostrarLinkPDF(resultado.docUrl, resultado.registroId);
-                        this.carregarHistorico();
-                        this.limparFormulario();
-                    } else {
-                        this.mostrarToast('❌ Erro: ' + resultado.message, 'error');
+                    // ✅ CORREÇÃO: Garante que o array existe
+                    if (!formImages[previewId]) {
+                        formImages[previewId] = [];
                     }
                     
-                } catch (error) {
-                    this.mostrarToast('❌ Erro de conexão: ' + error.message, 'error');
-                } finally {
-                    this.mostrarLoading(false);
-                }
-            }
+                    // Adiciona o dataUrl COMPRIMIDO no array
+                    const imageIndex = formImages[previewId].push(dataUrl) - 1; // Pega o índice da nova imagem
 
-            async carregarHistorico() {
-                const loading = document.getElementById('loadingHistorico');
-                const container = document.getElementById('historicoContainer');
-                
-                loading.style.display = 'block';
-                container.innerHTML = '';
-                
-                try {
-                    const relatorios = await this.apiService.buscarRelatorios();
-                    this.renderizarHistorico(relatorios);
-                    this.atualizarUltimaSincronizacao();
-                } catch (error) {
-                    container.innerHTML = `
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            Erro ao carregar histórico: ${error.message}
-                        </div>
-                    `;
-                } finally {
-                    loading.style.display = 'none';
-                }
-            }
+                    // --- Preview com Botão Apagar (v4.1) ---
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'photo-preview-item';
+                    wrapper.id = `img-${previewId}-${imageIndex}`; // ID único
 
-            renderizarHistorico(relatorios) {
-                const container = document.getElementById('historicoContainer');
-                
-                if (relatorios.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center text-muted py-5">
-                            <i class="fas fa-inbox fa-3x mb-3"></i>
-                            <p>Nenhum relatório encontrado.</p>
-                        </div>
-                    `;
-                    return;
-                }
+                    const previewImg = document.createElement('img');
+                    previewImg.src = dataUrl;
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.type = 'button';
+                    deleteBtn.className = 'delete-img-btn';
+                    deleteBtn.innerHTML = '&times;';
+                    // As funções deleteImage e saveSig estão corretas e não precisam ser mexidas.
+                    deleteBtn.onclick = function() { deleteImage(previewId, imageIndex); };
 
-                // Ordenar por data mais recente
-                relatorios.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+                    wrapper.appendChild(previewImg);
+                    wrapper.appendChild(deleteBtn);
+                    container.appendChild(wrapper); // Adiciona ao container
+                };
+            };
+            reader.readAsDataURL(file);
+        })(f); // Passa 'f' para a IIFE
+    }
+    
+    // Limpa o valor do input para permitir selecionar o mesmo arquivo novamente
+    input.value = null;
+}
 
-                const html = relatorios.map(rel => `
-                    <div class="card historico-item">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <h6 class="card-title">OS: ${rel.numeroOS} - ${rel.pop}</h6>
-                                    <p class="card-text mb-1">
-                                        <small class="text-muted">
-                                            <i class="fas fa-map-marker-alt me-1"></i>${rel.endereco}
-                                        </small>
-                                    </p>
-                                    <p class="card-text mb-1">
-                                        <small class="text-muted">
-                                            <i class="fas fa-calendar me-1"></i>
-                                            ${this.formatarData(rel.dataCriacao)}
-                                        </small>
-                                    </p>
-                                    <span class="status-badge status-concluido">
-                                        <i class="fas fa-check-circle me-1"></i>${rel.status}
-                                    </span>
-                                </div>
-                                <div class="col-md-4 text-end">
-                                    <a href="${rel.pdfUrl}" target="_blank" class="btn btn-primary btn-sm">
-                                        <i class="fas fa-file-pdf me-1"></i>Ver PDF
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
+// O 'event listener' delegado (não precisa mudar, já deve existir)
+document.addEventListener('change', function(e){
+  if(e.target && e.target.classList && e.target.classList.contains('imgInput')){
+    handleImageInputChange(e.target);
+  }
+});
 
-                container.innerHTML = html;
-            }
+/* ========== Assinaturas (Canvas) ========== */
+function initSignatureCanvas(id){
+  const canvas = document.getElementById(id);
+  const ctx = canvas.getContext('2d');
+  resizeCanvasToDisplaySize(canvas);
+  ctx.strokeStyle = '#111';
+  ctx.lineWidth = 2.0;
+  let drawing = false;
+  let lastX=0, lastY=0;
 
-            formatarData(dataString) {
-                return new Date(dataString).toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            }
+  function getPointer(e){
+    const rect = canvas.getBoundingClientRect();
+    let clientX, clientY;
+    if(e.touches){
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    return {x: clientX - rect.left, y: clientY - rect.top};
+  }
+  function start(e){
+    drawing = true;
+    const p = getPointer(e);
+    lastX = p.x; lastY = p.y;
+    e.preventDefault();
+  }
+  function move(e){
+    if(!drawing) return;
+    const p = getPointer(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    lastX = p.x; lastY = p.y;
+    e.preventDefault();
+  }
+  function stop(e){
+    drawing = false;
+    e.preventDefault();
+  }
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', stop);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', move, {passive:false});
+  canvas.addEventListener('touchend', stop);
 
-            atualizarUltimaSincronizacao() {
-                const now = new Date();
-                document.getElementById('last-sync').textContent = 
-                    now.toLocaleTimeString('pt-BR');
-            }
+  // return helper functions
+  return {
+    clear: function(){ ctx.clearRect(0,0,canvas.width,canvas.height); },
+    toDataURL: function(){ return canvas.toDataURL('image/png'); }
+  };
+}
+function resizeCanvasToDisplaySize(canvas){
+  // adapta para dispositivo de forma simples
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+}
+function clearSig(id){
+  const c = document.getElementById(id);
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  // limpar preview
+  if(id==='sigTech') document.getElementById('sigTechPreview').innerHTML='';
+  if(id==='sigResp') document.getElementById('sigRespPreview').innerHTML='';
+  if(id==='sigTechImg') document.getElementById('sigTechImg').value='';
+  if(id==='sigRespImg') document.getElementById('sigRespImg').value='';
+}
+/* ========== (MODIFICADO) Salvar Assinatura (com Compressão JPEG) ========== */
+function saveSig(canvasId, hiddenInputId){
+  const c = document.getElementById(canvasId);
+  
+  // Comprime a assinatura para JPEG (qualidade 0.8)
+  const data = c.toDataURL('image/png', 0.8); 
+  
+  document.getElementById(hiddenInputId).value = data;
+  const previewId = (canvasId==='sigTech') ? 'sigTechPreview' : 'sigRespPreview';
+  document.getElementById(previewId).innerHTML = '<img src="'+data+'" style="max-width:220px; border:1px solid #ccc; border-radius:6px;" />';
+}
+/* ========== Salvar rascunho local (localStorage) ========== */
+function gatherFormData(){
+  const form = document.getElementById('osForm');
+  const data = {};
+  const fd = new FormData(form);
+  // campos básicos
+  data.numeroOS = document.getElementById('numeroOS').value;
+  data.dataHora = document.getElementById('dataHora').value;
+  data.horaInicio = document.getElementById('horaInicio').value;
+  data.horaTermino = document.getElementById('horaTermino').value;
+  data.pop = document.getElementById('popSelect').value;
+  data.endereco = document.getElementById('endereco').value;
+  data.localizacao = document.getElementById('localizacao').value;
+  data.dataEstimada = document.getElementById('dataEstimada').value;
 
-            mostrarToast(mensagem, tipo = 'info') {
-                const toastContainer = document.querySelector('.toast-container');
-                const toastId = 'toast-' + Date.now();
-                
-                const toastHtml = `
-                    <div id="${toastId}" class="toast align-items-center text-bg-${tipo === 'error' ? 'danger' : tipo} border-0" role="alert">
-                        <div class="d-flex">
-                            <div class="toast-body">
-                                ${mensagem}
-                            </div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                        </div>
-                    </div>
-                `;
-                
-                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-                
-                const toastElement = document.getElementById(toastId);
-                const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
-                toast.show();
-                
-                toastElement.addEventListener('hidden.bs.toast', () => {
-                    toastElement.remove();
-                });
-            }
+  // assinaturas
+  data.sigTech = document.getElementById('sigTechImg').value || null;
+  data.sigResp = document.getElementById('sigRespImg').value || null;
 
-            mostrarLinkPDF(url, registroId) {
-                this.mostrarToast(`
-                    <div>
-                        <strong>PDF Gerado com Sucesso!</strong><br>
-                        <small>Registro: ${registroId}</small><br>
-                        <a href="${url}" target="_blank" class="text-white text-decoration-underline">
-                            <i class="fas fa-external-link-alt me-1"></i>Abrir PDF
-                        </a>
-                    </div>
-                `, 'success');
-            }
+  // imagens: copiar do formImages
+  data.images = JSON.parse(JSON.stringify(formImages));
 
-            mostrarLoading(mostrar) {
-                document.getElementById('loadingOverlay').style.display = 
-                    mostrar ? 'block' : 'none';
-            }
+  // demais campos (usando names)
+  const names = ['limpeza_rack_status','limpeza_rack_obs','cabos_status','cabos_obs',
+                 'temp_status','temp_obs','vent_status','vent_obs','porta_status','porta_obs',
+                 'id_equip_status','id_equip_obs','olt_status','olt_obs','sw_status','sw_obs',
+                 'ret_status','ret_obs','acoes_realizadas','observacoes_recomendacoes'];
+  names.forEach(n=>{
+    data[n] = fd.getAll(n).join(', ') || fd.get(n) || '';
+  });
+  return data;
+}
 
-            configurarEventListeners() {
-                const form = document.getElementById('formManutencao');
-                if (form) {
-                    form.addEventListener('submit', (e) => {
-                        e.preventDefault();
-                        this.handleFormSubmit(form);
-                    });
-                }
+function saveDraft(){
+  const obj = gatherFormData();
+  const listKey = 'os_saved_list';
+  let list = JSON.parse(localStorage.getItem(listKey) || '[]');
+  list.push(obj);
+  localStorage.setItem(listKey, JSON.stringify(list));
+  alert('Rascunho salvo localmente.');
+}
 
-                // Auto-preencher data/hora atual
-                const now = new Date();
-                const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-                    .toISOString()
-                    .slice(0, 16);
-                document.querySelector('input[name="dataHora"]').value = localDateTime;
-            }
+/* ========== Gerar, salvar (simulado) e imprimir ========== */
+function generateAndPrint(){
+  // preenche horaTermino automaticamente
+  fillHoraTermino();
 
-            handleFormSubmit(form) {
-                const formData = new FormData(form);
-                const dados = Object.fromEntries(formData.entries());
-                
-                // Validação básica
-                if (!dados.numeroOS || !dados.pop || !dados.endereco) {
-                    this.mostrarToast('❌ Preencha todos os campos obrigatórios.', 'error');
-                    return;
-                }
+  // coletar dados
+  const obj = gatherFormData();
 
-                this.enviarFormulario(dados);
-            }
+  uploadData(obj);
 
-            limparFormulario() {
-                document.getElementById('formManutencao').reset();
-                clearSignature('tech');
-                clearSignature('resp');
-                
-                // Restaurar data/hora atual
-                const now = new Date();
-                const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-                    .toISOString()
-                    .slice(0, 16);
-                document.querySelector('input[name="dataHora"]').value = localDateTime;
-            }
-        }
+  // salvar no localStorage como registro (simulação do salvamento no Google Docs)
+  const listKey = 'os_saved_list';
+  let list = JSON.parse(localStorage.getItem(listKey) || '[]');
+  list.push(obj);
+  localStorage.setItem(listKey, JSON.stringify(list));
 
-        // Inicializar aplicação
-        const app = new ManutencaoPOPApp();
+  // atualiza contador do ano para próxima OS (incrementa)
+  const ano = new Date().getFullYear();
+  const key = 'os_counter_' + ano;
+  const cur = parseInt(localStorage.getItem(key) || '0',10);
+  if(!isNaN(cur)){
+    localStorage.setItem(key, String(cur)); // já incrementado quando abriu, mantemos
+  }
 
-        // Detectar modo PWA
-        function isRunningStandalone() {
-            return (window.matchMedia('(display-mode: standalone)').matches) || 
-                   (window.navigator.standalone) || 
-                   (document.referrer.includes('android-app://'));
-        }
+  // abre print
+  setTimeout(()=> window.print(), 300);
+}
 
-        if (isRunningStandalone()) {
-            document.body.classList.add('pwa-mode');
-            console.log('Executando em modo PWA');
-        }
-    </script>
+/* ========== Inicialização ========== */
+window.addEventListener('load', function(){
+  document.getElementById('btnUseNow').addEventListener('click', function(){
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const dtLocal = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+    document.getElementById('dataHora').value = dtLocal;
+  });
+});
+window.addEventListener('load', function(){
+  populatePOP();
+  gerarNumeroOS();
+  fillNowDateTime();
+  fillHoraInicio();
+  fillDataEstimadaPlus3();
+
+  // botão usar agora dataHora
+  document.getElementById('btnUseNow').addEventListener('click', function(){
+    fillNowDateTime();
+  });
+
+  // ao mudar o map link se vazio, desabilitar
+  const link = document.getElementById('mapsLink');
+  if(link.href === '#' || !document.getElementById('localizacao').value) link.style.opacity=0.5;
+
+  // inicializar canvas assinaturas
+  initSignatureCanvas('sigTech');
+  initSignatureCanvas('sigResp');
+});
+/* ========== (NOVO) Apagar Imagem Individual ========== */
+function deleteImage(previewId, index) {
+    // 1. Remove a imagem do array de dados
+    // Colocamos 'null' em vez de usar splice() para não bagunçar os índices
+    if (formImages[previewId] && formImages[previewId][index]) {
+        formImages[previewId][index] = null; 
+    }
+    
+    // 2. Remove o elemento (imagem + botão) da tela
+    const wrapper = document.getElementById(`img-${previewId}-${index}`);
+    if (wrapper) {
+        wrapper.parentNode.removeChild(wrapper);
+    }
+}
+</script>
 </body>
 </html>
-
