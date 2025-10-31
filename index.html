@@ -167,6 +167,47 @@
     padding: 0;
   }
 
+  /* ✅ NOVO: Modal para escolher câmera ou arquivo */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 9998;
+    display: none;
+  }
+  .modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    z-index: 9999;
+    display: none;
+    width: 90%;
+    max-width: 300px;
+  }
+  .modal button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 6px;
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .modal button.secondary {
+    background: #6c757d;
+  }
+
   /* ✅ NOVO: Loading overlay */
   .loading-overlay {
     display: none;
@@ -230,9 +271,18 @@
   <div id="loadingOverlay" class="loading-overlay">
     <div style="text-align: center;">
       <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
-      <h3>Gerando PDF e salvando no banco...</h3>
+      <h3>Gerando PDF...</h3>
       <p>Isso pode levar alguns segundos</p>
     </div>
+  </div>
+
+  <!-- ✅ NOVO: Modal para escolher câmera ou arquivo -->
+  <div id="imageModalOverlay" class="modal-overlay"></div>
+  <div id="imageModal" class="modal">
+    <h3 style="text-align: center; margin-bottom: 15px;">Inserir Imagem</h3>
+    <button onclick="openCamera()">📷 Abrir Câmera</button>
+    <button onclick="openFilePicker()" class="secondary">📁 Escolher Arquivo</button>
+    <button onclick="closeImageModal()" style="background: #dc3545;">Cancelar</button>
   </div>
 
   <div class="container">
@@ -319,12 +369,12 @@
             </div>
           </div>
           <label>Observações</label>
-          <textarea name="limpeza_rack_obs" placeholder="Observações..."></textarea>
+          <textarea name="limpeza_rack_obs" placeholder="Observações..." onblur="validarCampoVazio(this)"></textarea>
           <div style="margin-top:8px;">
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
-              <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview1" class="imgInput" multiple>
+              <button type="button" class="custom-btn" onclick="openImageModal('preview1')">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview1" class="imgInput" multiple style="display: none;">
             </div>
             <div id="preview1" class="photo-preview"></div>
           </div>
@@ -343,13 +393,13 @@
             </div>
           </div>
           <label>Observações</label>
-          <textarea name="cabos_obs" placeholder="Observações..."></textarea>
+          <textarea name="cabos_obs" placeholder="Observações..." onblur="validarCampoVazio(this)"></textarea>
 
           <div style="margin-top:8px;">
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
-              <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview2" class="imgInput" multiple>
+              <button type="button" class="custom-btn" onclick="openImageModal('preview2')">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview2" class="imgInput" multiple style="display: none;">
             </div>
             <div id="preview2" class="photo-preview"></div>
           </div>
@@ -368,12 +418,12 @@
             </div>
           </div>
           <label>Observações / Valor (°C)</label>
-          <input type="text" name="temp_obs" placeholder="Ex: 24°C - Observações..." />
+          <input type="text" name="temp_obs" placeholder="Ex: 24°C - Observações..." onblur="validarCampoVazio(this)" />
           <div style="margin-top:8px;">
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
-              <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview3" class="imgInput" multiple>
+              <button type="button" class="custom-btn" onclick="openImageModal('preview3')">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview3" class="imgInput" multiple style="display: none;">
             </div>
             <div id="preview3" class="photo-preview"></div>
           </div>
@@ -392,12 +442,12 @@
             </div>
           </div>
           <label>Observações</label>
-          <textarea name="vent_obs" placeholder="Observações..."></textarea>
+          <textarea name="vent_obs" placeholder="Observações..." onblur="validarCampoVazio(this)"></textarea>
           <div style="margin-top:8px;">
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
-              <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview4" class="imgInput" multiple>
+              <button type="button" class="custom-btn" onclick="openImageModal('preview4')">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview4" class="imgInput" multiple style="display: none;">
             </div>
             <div id="preview4" class="photo-preview"></div>
           </div>
@@ -416,12 +466,12 @@
             </div>
           </div>
           <label>Observações</label>
-          <textarea name="porta_obs" placeholder="Observações..."></textarea>
+          <textarea name="porta_obs" placeholder="Observações..." onblur="validarCampoVazio(this)"></textarea>
           <div style="margin-top:8px;">
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
-              <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview5" class="imgInput" multiple>
+              <button type="button" class="custom-btn" onclick="openImageModal('preview5')">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview5" class="imgInput" multiple style="display: none;">
             </div>
             <div id="preview5" class="photo-preview"></div>
           </div>
@@ -440,12 +490,12 @@
             </div>
           </div>
           <label>Observações</label>
-          <textarea name="id_equip_obs" placeholder="Observações..."></textarea>
+          <textarea name="id_equip_obs" placeholder="Observações..." onblur="validarCampoVazio(this)"></textarea>
           <div style="margin-top:8px;">
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
-              <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview6" class="imgInput" multiple>
+              <button type="button" class="custom-btn" onclick="openImageModal('preview6')">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview6" class="imgInput" multiple style="display: none;">
             </div>
             <div id="preview6" class="photo-preview"></div>
           </div>
@@ -468,12 +518,12 @@
             </div>
           </div>
           <label>Observações</label>
-          <textarea name="olt_obs" placeholder="Observações..."></textarea>
+          <textarea name="olt_obs" placeholder="Observações..." onblur="validarCampoVazio(this)"></textarea>
           <div style="margin-top:8px;">
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
-              <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview7" class="imgInput" multiple>
+              <button type="button" class="custom-btn" onclick="openImageModal('preview7')">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview7" class="imgInput" multiple style="display: none;">
             </div>
             <div id="preview7" class="photo-preview"></div>
           </div>
@@ -491,12 +541,12 @@
             </div>
           </div>
           <label>Observações</label>
-          <textarea name="sw_obs" placeholder="Observações..."></textarea>
+          <textarea name="sw_obs" placeholder="Observações..." onblur="validarCampoVazio(this)"></textarea>
           <div style="margin-top:8px;">
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
-              <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview8" class="imgInput" multiple>
+              <button type="button" class="custom-btn" onclick="openImageModal('preview8')">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview8" class="imgInput" multiple style="display: none;">
             </div>
             <div id="preview8" class="photo-preview"></div>
           </div>
@@ -514,12 +564,12 @@
             </div>
           </div>
           <label>Observações</label>
-          <textarea name="ret_obs" placeholder="Observações..."></textarea>
+          <textarea name="ret_obs" placeholder="Observações..." onblur="validarCampoVazio(this)"></textarea>
           <div style="margin-top:8px;">
             <label>Imagem de comprovação</label>
             <div class="file-input-wrapper">
-              <button type="button" class="custom-btn">Inserir</button>
-              <input type="file" accept="image/*" capture="environment" data-preview="preview9" class="imgInput" multiple>
+              <button type="button" class="custom-btn" onclick="openImageModal('preview9')">Inserir</button>
+              <input type="file" accept="image/*" capture="environment" data-preview="preview9" class="imgInput" multiple style="display: none;">
             </div>
             <div id="preview9" class="photo-preview"></div>
           </div>
@@ -530,10 +580,10 @@
       <div class="section">
         <h2>3. Ações Corretivas e Observações</h2>
         <label>Ações realizadas</label>
-        <textarea name="acoes_realizadas"></textarea>
+        <textarea name="acoes_realizadas" onblur="validarCampoVazio(this)"></textarea>
 
         <label style="margin-top:8px;">Observações / Recomendações</label>
-        <textarea name="observacoes_recomendacoes"></textarea>
+        <textarea name="observacoes_recomendacoes" onblur="validarCampoVazio(this)"></textarea>
       </div>
 
       <!-- Próxima manutenção -->
@@ -598,6 +648,9 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// ✅ NOVO: Variável para controle do modal de imagem
+let currentPreviewId = '';
+
 /* ========== Dados dos POPs (ordenados alfabeticamente) ========== */
 const pops = [
   {name:"4 Bocas", address:"Br 364 km 25 sentido - Porto Velho, Rio Branco - AC, 69900-000", maps:"https://maps.app.goo.gl/iRFgi4HiX6qroz1X8"},
@@ -634,6 +687,47 @@ const pops = [
   {name:"Xapuri ( Cidade )", address:"R. Nações Unidas, 1143 - Centro, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/FV8RExFPezVrZMA69"},
   {name:"Xapuri (Posto)", address:"Auto Posto Entroncamento Petrobras, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/1z6WPwejPAZ6iq369"},
 ];
+
+/* ========== ✅ NOVAS FUNÇÕES: Modal de imagem ========== */
+function openImageModal(previewId) {
+    currentPreviewId = previewId;
+    document.getElementById('imageModal').style.display = 'block';
+    document.getElementById('imageModalOverlay').style.display = 'block';
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').style.display = 'none';
+    document.getElementById('imageModalOverlay').style.display = 'none';
+    currentPreviewId = '';
+}
+
+function openCamera() {
+    const input = document.querySelector(`input[data-preview="${currentPreviewId}"]`);
+    if (input) {
+        input.setAttribute('capture', 'environment');
+        input.click();
+    }
+    closeImageModal();
+}
+
+function openFilePicker() {
+    const input = document.querySelector(`input[data-preview="${currentPreviewId}"]`);
+    if (input) {
+        input.removeAttribute('capture');
+        input.click();
+    }
+    closeImageModal();
+}
+
+/* ========== ✅ NOVA FUNÇÃO: Validar campo vazio ========== */
+function validarCampoVazio(campo) {
+    if (!campo.value.trim()) {
+        campo.style.border = '2px solid #dc3545';
+        campo.placeholder = '⚠️ Este campo é obrigatório!';
+    } else {
+        campo.style.border = '1px solid #ccc';
+    }
+}
 
 /* ========== Injeção do select de POPs ========== */
 function populatePOP(){
@@ -943,7 +1037,7 @@ function deleteImage(previewId, index) {
     }
 }
 
-/* ========== ✅ ALTERADO: Gerar PDF com jsPDF (nova implementação) ========== */
+/* ========== ✅ MELHORADO: Gerar PDF com jsPDF ========== */
 async function generateAndPrint() {
     if (!validarFormularioManutencao()) return;
     
@@ -986,6 +1080,12 @@ async function generateAndPrint() {
         
         const formData = gatherFormData();
         
+        // ✅ MELHORIA: Formatar data dd/mm/aaaa
+        const dataFormatada = formData.dataHora ? 
+            new Date(formData.dataHora).toLocaleDateString('pt-BR') + ' ' + 
+            new Date(formData.dataHora).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) 
+            : 'N/A';
+        
         // Número OS
         pdf.setFont(undefined, 'bold');
         pdf.text('Nº da OS:', margin, y);
@@ -996,7 +1096,7 @@ async function generateAndPrint() {
         pdf.setFont(undefined, 'bold');
         pdf.text('Data/Hora:', pageWidth / 2, y);
         pdf.setFont(undefined, 'normal');
-        pdf.text(formData.dataHora || 'N/A', pageWidth / 2 + 25, y);
+        pdf.text(dataFormatada, pageWidth / 2 + 25, y);
         y += 7;
 
         // POP
@@ -1033,17 +1133,17 @@ async function generateAndPrint() {
 
         // Itens da seção 1
         const itensSecao1 = [
-            { titulo: '1.1 Limpeza do rack e equipamentos', status: formData.limpeza_rack_status, obs: formData.limpeza_rack_obs },
-            { titulo: '1.2 Organização dos cabos e patch cords', status: formData.cabos_status, obs: formData.cabos_obs },
-            { titulo: '1.3 Temperatura ambiente (°C)', status: formData.temp_status, obs: formData.temp_obs },
-            { titulo: '1.4 Ventilação / ar-condicionado', status: formData.vent_status, obs: formData.vent_obs },
-            { titulo: '1.5 Porta e fechaduras do POP', status: formData.porta_status, obs: formData.porta_obs },
-            { titulo: '1.6 Identificação de equipamentos e cabos', status: formData.id_equip_status, obs: formData.id_equip_obs }
+            { titulo: '1.1 Limpeza do rack e equipamentos', status: formData.limpeza_rack_status, obs: formData.limpeza_rack_obs, images: formData.images?.preview1 },
+            { titulo: '1.2 Organização dos cabos e patch cords', status: formData.cabos_status, obs: formData.cabos_obs, images: formData.images?.preview2 },
+            { titulo: '1.3 Temperatura ambiente (°C)', status: formData.temp_status, obs: formData.temp_obs, images: formData.images?.preview3 },
+            { titulo: '1.4 Ventilação / ar-condicionado', status: formData.vent_status, obs: formData.vent_obs, images: formData.images?.preview4 },
+            { titulo: '1.5 Porta e fechaduras do POP', status: formData.porta_status, obs: formData.porta_obs, images: formData.images?.preview5 },
+            { titulo: '1.6 Identificação de equipamentos e cabos', status: formData.id_equip_status, obs: formData.id_equip_obs, images: formData.images?.preview6 }
         ];
 
         pdf.setFontSize(10);
         for (const item of itensSecao1) {
-            if (y > 250) {
+            if (y > 200) {
                 pdf.addPage();
                 y = 20;
             }
@@ -1051,8 +1151,10 @@ async function generateAndPrint() {
             pdf.setFont(undefined, 'bold');
             pdf.text(item.titulo, margin, y);
             
+            // ✅ MELHORIA: Status colorido
             pdf.setFont(undefined, 'normal');
-            pdf.text(`Status: ${item.status || 'N/A'}`, margin + 80, y);
+            const statusText = item.status === 'ok' ? '✅ OK' : item.status === 'nao_ok' ? '❌ Não OK' : 'N/A';
+            pdf.text(`Status: ${statusText}`, margin + 80, y);
             
             y += 5;
             
@@ -1063,13 +1165,40 @@ async function generateAndPrint() {
             } else {
                 y += 5;
             }
+
+            // ✅ MELHORIA: Imagens junto com cada item
+            if (item.images && item.images.length > 0) {
+                for (let i = 0; i < item.images.length; i++) {
+                    if (item.images[i] && y < 250) {
+                        try {
+                            const imgProps = pdf.getImageProperties(item.images[i]);
+                            const maxW = 40;
+                            const maxH = 30;
+                            const ratio = Math.min(maxW / imgProps.width, maxH / imgProps.height);
+                            const w = imgProps.width * ratio;
+                            const h = imgProps.height * ratio;
+                            
+                            pdf.addImage(item.images[i], 'JPEG', margin, y, w, h);
+                            pdf.text(`Imagem ${i+1}`, margin + w + 5, y + (h/2));
+                            y += h + 5;
+                        } catch(e) {
+                            console.warn('Erro ao adicionar imagem:', e);
+                        }
+                    }
+                }
+            }
             
             // Linha separadora
             pdf.line(margin, y, pageWidth - margin, y);
-            y += 5;
+            y += 8;
         }
 
         // Seção 2: Equipamentos Principais
+        if (y > 200) {
+            pdf.addPage();
+            y = 20;
+        }
+        
         y += 5;
         pdf.setFont(undefined, 'bold');
         pdf.setFontSize(12);
@@ -1077,14 +1206,14 @@ async function generateAndPrint() {
         y += 8;
 
         const itensSecao2 = [
-            { titulo: '2.1 OLT (Optical Line Terminal)', status: formData.olt_status, obs: formData.olt_obs },
-            { titulo: '2.2 Switch (SW)', status: formData.sw_status, obs: formData.sw_obs },
-            { titulo: '2.3 Retificadora e Baterias', status: formData.ret_status, obs: formData.ret_obs }
+            { titulo: '2.1 OLT (Optical Line Terminal)', status: formData.olt_status, obs: formData.olt_obs, images: formData.images?.preview7 },
+            { titulo: '2.2 Switch (SW)', status: formData.sw_status, obs: formData.sw_obs, images: formData.images?.preview8 },
+            { titulo: '2.3 Retificadora e Baterias', status: formData.ret_status, obs: formData.ret_obs, images: formData.images?.preview9 }
         ];
 
         pdf.setFontSize(10);
         for (const item of itensSecao2) {
-            if (y > 250) {
+            if (y > 200) {
                 pdf.addPage();
                 y = 20;
             }
@@ -1093,7 +1222,8 @@ async function generateAndPrint() {
             pdf.text(item.titulo, margin, y);
             
             pdf.setFont(undefined, 'normal');
-            pdf.text(`Status: ${item.status || 'N/A'}`, margin + 80, y);
+            const statusText = item.status === 'ok' ? '✅ OK' : item.status === 'nao_ok' ? '❌ Não OK' : 'N/A';
+            pdf.text(`Status: ${statusText}`, margin + 80, y);
             
             y += 5;
             
@@ -1104,13 +1234,40 @@ async function generateAndPrint() {
             } else {
                 y += 5;
             }
+
+            // Imagens junto com cada item
+            if (item.images && item.images.length > 0) {
+                for (let i = 0; i < item.images.length; i++) {
+                    if (item.images[i] && y < 250) {
+                        try {
+                            const imgProps = pdf.getImageProperties(item.images[i]);
+                            const maxW = 40;
+                            const maxH = 30;
+                            const ratio = Math.min(maxW / imgProps.width, maxH / imgProps.height);
+                            const w = imgProps.width * ratio;
+                            const h = imgProps.height * ratio;
+                            
+                            pdf.addImage(item.images[i], 'JPEG', margin, y, w, h);
+                            pdf.text(`Imagem ${i+1}`, margin + w + 5, y + (h/2));
+                            y += h + 5;
+                        } catch(e) {
+                            console.warn('Erro ao adicionar imagem:', e);
+                        }
+                    }
+                }
+            }
             
             pdf.line(margin, y, pageWidth - margin, y);
-            y += 5;
+            y += 8;
         }
 
         // Ações Corretivas
         if (formData.acoes_realizadas || formData.observacoes_recomendacoes) {
+            if (y > 200) {
+                pdf.addPage();
+                y = 20;
+            }
+            
             y += 5;
             pdf.setFont(undefined, 'bold');
             pdf.setFontSize(12);
@@ -1143,6 +1300,11 @@ async function generateAndPrint() {
 
         // Próxima Manutenção
         if (formData.dataEstimada) {
+            if (y > 250) {
+                pdf.addPage();
+                y = 20;
+            }
+            
             y += 5;
             pdf.setFont(undefined, 'bold');
             pdf.setFontSize(12);
@@ -1151,13 +1313,20 @@ async function generateAndPrint() {
 
             pdf.setFontSize(10);
             pdf.setFont(undefined, 'normal');
-            pdf.text(`Data estimada: ${formData.dataEstimada}`, margin, y);
+            // ✅ MELHORIA: Formatar data dd/mm/aaaa
+            const dataEstimadaFormatada = formData.dataEstimada ? 
+                new Date(formData.dataEstimada).toLocaleDateString('pt-BR') : 'N/A';
+            pdf.text(`Data estimada: ${dataEstimadaFormatada}`, margin, y);
             y += 10;
         }
 
-        // Assinaturas (nova página)
-        pdf.addPage();
-        y = 30;
+        // ✅ MELHORIA: Assinaturas melhor posicionadas
+        if (y > 150) {
+            pdf.addPage();
+            y = 30;
+        } else {
+            y += 10;
+        }
         
         pdf.setFont(undefined, 'bold');
         pdf.setFontSize(14);
@@ -1168,12 +1337,13 @@ async function generateAndPrint() {
         if (formData.sigTech) {
             try {
                 const sigTechProps = pdf.getImageProperties(formData.sigTech);
-                const sigW = 70;
+                const sigW = 60;
                 const sigH = (sigTechProps.height * sigW) / sigTechProps.width;
-                pdf.addImage(formData.sigTech, 'PNG', margin + 20, y, sigW, sigH);
-                pdf.line(margin + 20, y + sigH + 2, margin + 20 + sigW, y + sigH + 2);
+                const sigX = (pageWidth / 2) - sigW - 10;
+                pdf.addImage(formData.sigTech, 'PNG', sigX, y, sigW, sigH);
+                pdf.line(sigX, y + sigH + 2, sigX + sigW, y + sigH + 2);
                 pdf.setFontSize(10);
-                pdf.text('Assinatura do Técnico', margin + 20 + (sigW / 2), y + sigH + 8, { align: 'center' });
+                pdf.text('Assinatura do Técnico', sigX + (sigW / 2), y + sigH + 8, { align: 'center' });
             } catch(e) {
                 console.warn('Erro ao adicionar assinatura técnica:', e);
             }
@@ -1183,44 +1353,15 @@ async function generateAndPrint() {
         if (formData.sigResp) {
             try {
                 const sigRespProps = pdf.getImageProperties(formData.sigResp);
-                const sigW = 70;
+                const sigW = 60;
                 const sigH = (sigRespProps.height * sigW) / sigRespProps.width;
-                pdf.addImage(formData.sigResp, 'PNG', pageWidth - margin - 20 - sigW, y, sigW, sigH);
-                pdf.line(pageWidth - margin - 20 - sigW, y + sigH + 2, pageWidth - margin - 20, y + sigH + 2);
+                const sigX = (pageWidth / 2) + 10;
+                pdf.addImage(formData.sigResp, 'PNG', sigX, y, sigW, sigH);
+                pdf.line(sigX, y + sigH + 2, sigX + sigW, y + sigH + 2);
                 pdf.setFontSize(10);
-                pdf.text('Assinatura do Responsável', pageWidth - margin - 20 - (sigW / 2), y + sigH + 8, { align: 'center' });
+                pdf.text('Assinatura do Responsável', sigX + (sigW / 2), y + sigH + 8, { align: 'center' });
             } catch(e) {
                 console.warn('Erro ao adicionar assinatura responsável:', e);
-            }
-        }
-
-        // Imagens das verificações
-        if (formData.images && Object.keys(formData.images).length > 0) {
-            for (const [previewId, images] of Object.entries(formData.images)) {
-                for (let i = 0; i < images.length; i++) {
-                    if (images[i]) {
-                        try {
-                            pdf.addPage();
-                            y = 20;
-                            pdf.setFont(undefined, 'bold');
-                            pdf.setFontSize(14);
-                            pdf.text(`Imagem de Comprovação - ${previewId.replace('preview', 'Item ')}`, pageWidth / 2, y, { align: 'center' });
-                            y += 15;
-
-                            const imgProps = pdf.getImageProperties(images[i]);
-                            const maxW = pageWidth - margin * 2;
-                            const maxH = 200;
-                            const ratio = Math.min(maxW / imgProps.width, maxH / imgProps.height);
-                            const w = imgProps.width * ratio;
-                            const h = imgProps.height * ratio;
-                            const x = (pageWidth - w) / 2;
-                            
-                            pdf.addImage(images[i], 'JPEG', x, y, w, h);
-                        } catch(e) {
-                            console.warn('Erro ao adicionar imagem ao PDF:', e);
-                        }
-                    }
-                }
             }
         }
 
@@ -1244,7 +1385,7 @@ async function generateAndPrint() {
     }
 }
 
-/* ========== ✅ NOVA FUNÇÃO: Validar formulário manutenção ========== */
+/* ========== ✅ MELHORADO: Validar formulário manutenção ========== */
 function validarFormularioManutencao() {
     const faltando = [];
 
@@ -1261,8 +1402,38 @@ function validarFormularioManutencao() {
     const temVerificacao = document.querySelectorAll('select[name$="_status"]:not([value=""])').length > 0;
     if (!temVerificacao) faltando.push("Pelo menos uma verificação preenchida");
 
+    // ✅ MELHORIA: Validar campos de observações
+    const camposObservacoes = document.querySelectorAll('textarea[name$="_obs"], input[type="text"][name$="_obs"]');
+    camposObservacoes.forEach(campo => {
+        if (!campo.value.trim() && campo.closest('.item').querySelector('select[name$="_status"]').value) {
+            const itemNome = campo.closest('.item').querySelector('.title').textContent;
+            faltando.push(`Observações do item: ${itemNome}`);
+        }
+    });
+
+    // ✅ MELHORIA: Validar seções 3
+    const acoesRealizadas = document.querySelector('textarea[name="acoes_realizadas"]').value.trim();
+    const observacoesRecomendacoes = document.querySelector('textarea[name="observacoes_recomendacoes"]').value.trim();
+    
+    if (!acoesRealizadas && !observacoesRecomendacoes) {
+        faltando.push("Pelo menos um campo da seção 'Ações Corretivas e Observações'");
+    }
+
     if (faltando.length > 0) {
         alert("⚠️ Antes de gerar o PDF, preencha os seguintes campos:\n\n• " + faltando.join("\n• "));
+        
+        // Destacar campos faltantes
+        faltando.forEach(item => {
+            if (item.includes('Observações do item:')) {
+                const itemNome = item.replace('Observações do item: ', '');
+                const campo = document.querySelector(`.title:contains("${itemNome}")`).closest('.item').querySelector('textarea[name$="_obs"], input[type="text"][name$="_obs"]');
+                if (campo) {
+                    campo.style.border = '2px solid #dc3545';
+                    campo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+        
         return false;
     }
 
@@ -1326,6 +1497,7 @@ function limparFormulario() {
     const textareas = document.querySelectorAll('textarea');
     textareas.forEach(textarea => {
         textarea.value = '';
+        textarea.style.border = '1px solid #ccc';
     });
     
     // Limpar inputs de texto
@@ -1333,6 +1505,7 @@ function limparFormulario() {
     inputs.forEach(input => {
         if (!input.id.includes('numeroOS')) { // Não limpar número da OS
             input.value = '';
+            input.style.border = '1px solid #ccc';
         }
     });
     
