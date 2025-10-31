@@ -577,8 +577,9 @@
 
       <!-- ações -->
       <div class="footer-actions no-print">
-        <button type="button" class="btn secondary" onclick="saveDraft()">Salvar (local)</button>
-        <button type="button" class="btn" onclick="generateAndPrint()">Gerar e Imprimir</button>
+        <button type="button" class="btn secondary" onclick="limparFormulario()">Limpar Formulário</button>
+
+        <button type="button" class="btn" onclick="generateAndPrint()">Gerar e Baixar PDF</button>
       </div>
     </form>
   </div>
@@ -633,46 +634,6 @@ const pops = [
   {name:"Xapuri ( Cidade )", address:"R. Nações Unidas, 1143 - Centro, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/FV8RExFPezVrZMA69"},
   {name:"Xapuri (Posto)", address:"Auto Posto Entroncamento Petrobras, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/1z6WPwejPAZ6iq369"},
 ];
-/* ========== ✅ ATUALIZADO: URL do Google Apps Script ========== */
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPE0AOWVQtzpaLtsNn2RP6djr3s4YB1ZTod8KDedRIipwDseDmqso55NzsnoNN48xl/exec';
-
-/* ========== Função de Upload para o Google Apps Script ========== */
-async function uploadData(data) {
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6SsmKmhrfYa6FL271khWABWReOc19MdxTxUoSFYE2C19lLZIzC7I8ijzMqhM2nsK_/exec";
-
-    const btn = document.querySelector('button[onclick="generateAndPrint()"]');
-    const originalText = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = 'Enviando PDF...';
-
-    try {
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain' }, 
-            body: JSON.stringify(data)
-        });
-
-        const result = await response.json();
-
-        if (result.status === 'success') {
-            alert('PDF da OS salvo com sucesso!\n\nPDF: ' + result.pdfUrl);
-            // Abrir o PDF em nova aba
-            if (result.pdfUrl) {
-                window.open(result.pdfUrl, '_blank');
-            }
-        } else {
-            throw new Error(result.message || 'Erro desconhecido no Apps Script.');
-        }
-
-    } catch (error) {
-        console.error("Erro no envio:", error);
-        alert('Falha ao salvar no Google Drive. Verifique o console.\nErro: ' + error.message);
-    } finally {
-        btn.disabled = false;
-        btn.textContent = originalText;
-    }
-}
 
 /* ========== Injeção do select de POPs ========== */
 function populatePOP(){
@@ -970,15 +931,6 @@ function gatherFormData(){
   return data;
 }
 
-function saveDraft(){
-  const obj = gatherFormData();
-  const listKey = 'os_saved_list';
-  let list = JSON.parse(localStorage.getItem(listKey) || '[]');
-  list.push(obj);
-  localStorage.setItem(listKey, JSON.stringify(list));
-  alert('Rascunho salvo localmente.');
-}
-
 /* ========== Apagar Imagem Individual ========== */
 function deleteImage(previewId, index) {
     if (formImages[previewId] && formImages[previewId][index]) {
@@ -991,49 +943,57 @@ function deleteImage(previewId, index) {
     }
 }
 
-/* ========== Gerar PDF e enviar para Google Drive ========== */
+/* ========== ✅ ATUALIZADO: Gerar PDF apenas local ========== */
 async function generateAndPrint() {
-    // Preenche horaTermino automaticamente
-    fillHoraTermino();
-
-    // Coletar dados para envio
-    const obj = gatherFormData();
-
-    // ✅ GERAR PDF DO HTML ATUAL
-    const element = document.getElementById('osForm');
-    const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5],
-        filename: `OS-${document.getElementById('numeroOS').value}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-            scale: 2,
-            useCORS: true,
-            logging: false
-        },
-        jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
-    };
-
     try {
-        // Gerar PDF
-        const pdfBlob = await html2pdf().from(element).set(opt).output('blob');
+        // Preenche horaTermino automaticamente
+        fillHoraTermino();
+
+        // Mostrar loading
+        const btn = document.querySelector('button[onclick="generateAndPrint()"]');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Gerando PDF...';
+
+        // ✅ GERAR E BAIXAR PDF LOCALMENTE
+        const element = document.getElementById('osForm');
+        const numeroOS = document.getElementById('numeroOS').value;
         
-        // Converter blob para base64 para envio
-        const reader = new FileReader();
-        reader.onload = function() {
-            const base64PDF = reader.result.split(',')[1];
-            
-            // Adicionar PDF aos dados para envio
-            obj.pdfBase64 = base64PDF;
-            obj.pdfFileName = `OS-${document.getElementById('numeroOS').value}.pdf`;
-            
-            // Enviar para Google Apps Script
-            uploadData(obj);
+        const opt = {
+            margin: [0.5, 0.5, 0.5, 0.5],
+            filename: `OS-${numeroOS}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2,
+                useCORS: true,
+                logging: false
+            },
+            jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
         };
-        reader.readAsDataURL(pdfBlob);
+
+        // Gerar e baixar PDF automaticamente
+        await html2pdf().from(element).set(opt).save();
+        
+        // ✅ SALVAR RASCUNHO LOCAL (OPCIONAL)
+        const formData = gatherFormData();
+        const listKey = 'os_saved_list';
+        let list = JSON.parse(localStorage.getItem(listKey) || '[]');
+        list.push(formData);
+        localStorage.setItem(listKey, JSON.stringify(list));
+
+        // Feedback de sucesso
+        btn.disabled = false;
+        btn.textContent = originalText;
+        alert('✅ PDF gerado e baixado com sucesso!\n\nArquivo: OS-' + numeroOS + '.pdf');
 
     } catch (error) {
         console.error("Erro ao gerar PDF:", error);
-        alert('Erro ao gerar PDF: ' + error.message);
+        alert('❌ Erro ao gerar PDF: ' + error.message);
+        
+        // Restaurar botão em caso de erro
+        const btn = document.querySelector('button[onclick="generateAndPrint()"]');
+        btn.disabled = false;
+        btn.textContent = 'Gerar e Imprimir';
     }
 }
 
@@ -1046,6 +1006,58 @@ window.addEventListener('load', function(){
     document.getElementById('dataHora').value = dtLocal;
   });
 });
+
+/* ========== ✅ NOVO: Limpar todo o formulário ========== */
+function limparFormulario() {
+    if (!confirm('Tem certeza que deseja limpar todos os campos do formulário?\nTodos os dados não salvos serão perdidos.')) {
+        return;
+    }
+
+    // Limpar campos básicos
+    document.getElementById('osForm').reset();
+    
+    // Limpar número da OS (será regenerado)
+    gerarNumeroOS();
+    
+    // Limpar data/hora atual
+    fillNowDateTime();
+    fillHoraInicio();
+    fillDataEstimadaPlus3();
+    
+    // Limpar seleção de POP
+    clearPopFields();
+    
+    // Limpar todas as imagens
+    const previewContainers = document.querySelectorAll('[id^="preview"]');
+    previewContainers.forEach(container => {
+        container.innerHTML = '';
+    });
+    
+    // Limpar arrays de imagens
+    for (const key in formImages) {
+        delete formImages[key];
+    }
+    
+    // Limpar assinaturas
+    clearSig('sigTech');
+    clearSig('sigResp');
+    
+    // Limpar campos de texto específicos (caso não sejam resetados pelo form.reset())
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+        textarea.value = '';
+    });
+    
+    // Limpar inputs de texto
+    const inputs = document.querySelectorAll('input[type="text"]');
+    inputs.forEach(input => {
+        if (!input.id.includes('numeroOS')) { // Não limpar número da OS
+            input.value = '';
+        }
+    });
+    
+    alert('Formulário limpo com sucesso! Pronto para criar uma nova OS.');
+}
 
 window.addEventListener('load', function(){
   populatePOP();
@@ -1067,6 +1079,3 @@ window.addEventListener('load', function(){
 </script>
 </body>
 </html>
-
-
-
