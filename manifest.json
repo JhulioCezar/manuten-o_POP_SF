@@ -1,11 +1,11 @@
 {
   "name": "Sistema de Manutenção POP",
   "short_name": "Manutenção POP",
-  "description": "Sistema para controle de manutenções preventivas e corretivas com integração Google Drive",
+  "description": "Sistema para controle de manutenções preventivas e corretivas",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2196f3",
+  "background_color": "#0d6efd",
+  "theme_color": "#0d6efd",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "pt-BR",
@@ -22,22 +22,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "screenshot-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Tela principal do sistema de manutenção"
-    },
-    {
-      "src": "screenshot-narrow.png",
-      "sizes": "375x667",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Visualização mobile do formulário"
     }
   ]
 }
