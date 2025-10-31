@@ -566,10 +566,38 @@ if ('serviceWorker' in navigator) {
 const pops = [
   {name:"4 Bocas", address:"Br 364 km 25 sentido - Porto Velho, Rio Branco - AC, 69900-000", maps:"https://maps.app.goo.gl/iRFgi4HiX6qroz1X8"},
   {name:"Acrelândia", address:"Acrelândia, Acre", maps:"https://maps.app.goo.gl/uAzxTA8C54GQtmTE8"},
-  // ... TODOS OS SEUS POPs ORIGINAIS COMPLETOS ...
+  {name:"Albert Sampaio", address:"Rodovia BR-364 Albert Sampaio, Rio Branco - AC, 69909-040", maps:"https://maps.app.goo.gl/1kQs6jH4PpJN8mKf8"},
+  {name:"Assis Brasil", address:"Ipiranga, Assis Brasil - AC, 69935-000", maps:"https://maps.app.goo.gl/zafXZppgL2Yae3Bu5"},
+  {name:"Belo Jardim", address:"Tv. Isaías, 208 - Belo Jardim I, Rio Branco - AC, 69907-848", maps:"https://maps.app.goo.gl/FnPmXhj7hSdbp6sA6"},
+  {name:"Benfica", address:"Benfica, Rio Branco, Acre", maps:"https://maps.app.goo.gl/6BLpDpxT9QFggr5eA"},
+  {name:"Bom Jesus", address:"Vila Acre, Rio Branco - AC", maps:"https://maps.app.goo.gl/7ARa5NroqG1rEUMq7"},
+  {name:"Bujari", address:"Bujari, AC, 69923-000", maps:"https://maps.app.goo.gl/gYnGmjFqhXHHL52aA"},
+  {name:"Calafate", address:"R. Abunã, 81 - Portal da Amazônia, Rio Branco - AC, 69915-840", maps:"https://maps.app.goo.gl/XeTCvk7LhbRCwkpNA"},
+  {name:"Capixaba", address:"Capixaba, AC, 69922-000", maps:"https://maps.app.goo.gl/T5aC4EG1VsuKBsDz5"},
+  {name:"Cidade do Povo", address:"Cidade do Povo, Rio Branco - AC, 69925-000", maps:"https://maps.app.goo.gl/c7ycJ1PGT3MFTDkn6"},
+  {name:"Data Center", address:"R. Bertioga, 131-61 - Vila Ivonete, Rio Branco - AC, 69914-570", maps:"https://maps.app.goo.gl/9oS3kq45e6Han7hH8"},
+  {name:"Esperança", address:"R. São José, 376 - Nova Esperança, Rio Branco - AC, 69915-202", maps:"https://maps.app.goo.gl/C4Veu4rWL7yH1mfy7"},
+  {name:"Feijó", address:"BR-364, 122, Feijó - AC, 69960-000", maps:"https://maps.app.goo.gl/3SSLGh2rvsDBFVn29"},
+  {name:"Liberdade", address:"BR-364, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/HjJkKVHR1Bcr1U2o7"},
+  {name:"Mâncio Lima", address:"R João B Rodrigues, 428 - Centro, Mâncio Lima - AC, 69900-970", maps:"https://maps.app.goo.gl/fG5f81v4jcBbiXcPA"},
+  {name:"Manoel Urbano", address:"Manoel Urbano, Acre", maps:"https://maps.app.goo.gl/7wEyk5Gj9RYn7aNw7"},
+  {name:"Maison Borges", address:"Distrito Industrial, Rio Branco - AC", maps:"https://maps.app.goo.gl/tMVds5Jq6mwRnEUF7"},
+  {name:"Part e Alta", address:"R. João Francisco da Cunha, 39 - Conj Procom, Rio Branco - AC, 69918-632", maps:"https://maps.app.goo.gl/25wwXie6vogyE8az8"},
+  {name:"Plácido de Castro", address:"R. Diamantino A De Macedo, 1112 - Plácido De Castro, Plácido de Castro - AC, 69928-000", maps:"https://maps.app.goo.gl/xGRWkw3g1c5X9JPd6"},
+  {name:"Porto Acre", address:"Porto Acre, Acre, 69921-000", maps:"https://maps.app.goo.gl/CYFdELdKAQ1XAGkP8"},
+  {name:"Pra Parte Alta", address:"R. João Francisco da Cunha, 39 - Conj Procom, Rio Branco - AC, 69918-632", maps:"https://maps.app.goo.gl/25wwXie6vogyE8az8"},
+  {name:"Rodrigues Alves", address:"Av. Projeto Rondon, 2-18, Rodrigues Alves - AC, 69985-000", maps:"https://maps.app.goo.gl/c9991Hv3q6eX1UdR8"},
+  {name:"Sobral", address:"R. Principal, 179-1 - Palheiral, Rio Branco - AC, 69903-830", maps:"https://maps.app.goo.gl/HEW8efJ7mD5EoLx49"},
+  {name:"Sena Madureira ( Cidade )", address:"R. Walter Wilton Maia, 169 - Sena Madureira, AC, 69940-000", maps:"https://maps.app.goo.gl/ZpW4qPWwk426BwQJ8"},
+  {name:"Sena Madureira ( Estrada )", address:"Sena Madureira, Acre", maps:"https://maps.app.goo.gl/bDMJo91eqv7noue3A"},
+  {name:"Senador Guiomard (Quinari)", address:"Sen. Guiomard, AC", maps:"https://maps.app.goo.gl/cTPPaNfiA1y8qiqn9"},
+  {name:"Tancredo Neves", address:"Estrada Raimundo Irineu Serra - Novo Horizonte, Rio Branco - AC, 69918-505", maps:"https://maps.app.goo.gl/BB4sHicRV9fFmL7p9"},
+  {name:"Tarauacá", address:"R. Floriano Peixoto, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/uZp1eHpGair9AqUW7"},
+  {name:"Trevo Rodrigues Alves", address:"BR-364, Cruzeiro do Sul - AC, 69980-000", maps:"https://maps.app.goo.gl/csPQGbGUHtxnhSCNA"},
+  {name:"Vila Caquetá", address:"BR-317, 20191 - Vila Caquetá, Sen. Guiomard - AC, 69925-000", maps:"https://maps.app.goo.gl/5s3hwEwwJhU17H9G7"},
+  {name:"Xapuri ( Cidade )", address:"R. Nações Unidas, 1143 - Centro, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/FV8RExFPezVrZMA69"},
   {name:"Xapuri (Posto)", address:"Auto Posto Entroncamento Petrobras, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/1z6WPwejPAZ6iq369"},
 ];
-
 /* ========== ✅ ATUALIZADO: URL do Google Apps Script ========== */
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPE0AOWVQtzpaLtsNn2RP6djr3s4YB1ZTod8KDedRIipwDseDmqso55NzsnoNN48xl/exec';
 
@@ -985,4 +1013,5 @@ window.addEventListener('load', function(){
 </script>
 </body>
 </html>
+
 
