@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <title>Ordem de Serviço – Manutenção Preventiva POP</title>
-
 <!-- ✅ NOVO: Meta tags PWA -->
 <meta name="theme-color" content="#0d6efd"/>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -183,7 +183,42 @@
     .btn, .no-print{display:none!important}
     header, form.card{box-shadow:none; border:none; border-radius:0}
     .sign-canvas{border:none}
-  }
+    
+    /* ✅ NOVAS REGRAS PARA IMPRESSÃO DE IMAGENS */
+    .photo-preview-item {
+        display: block;
+        margin: 15px 0;
+        page-break-inside: avoid;
+    }
+    
+    .photo-preview-item img {
+        width: auto !important;
+        height: auto !important;
+        max-width: 100% !important;
+        max-height: 400px !important;
+        object-fit: contain !important;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+    
+    .delete-img-btn {
+        display: none !important;
+    }
+    
+    /* Garantir que as seções não quebrem no meio */
+    .item {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    
+    /* Melhor espaçamento para impressão */
+    .item {
+        margin-bottom: 20px;
+        padding: 12px;
+        background: #fff !important;
+        border: 1px solid #ddd !important;
+    }
+}
 </style>
 </head>
 <body>
@@ -603,17 +638,15 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPE0AOWVQtzpaL
 
 /* ========== Função de Upload para o Google Apps Script ========== */
 async function uploadData(data) {
-    // ✅ NOVO: Mostrar loading
-    document.getElementById('loadingOverlay').style.display = 'flex';
-    
-    // ✅ ATUALIZADO: Feedback para o usuário
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6SsmKmhrfYa6FL271khWABWReOc19MdxTxUoSFYE2C19lLZIzC7I8ijzMqhM2nsK_/exec";
+
     const btn = document.querySelector('button[onclick="generateAndPrint()"]');
     const originalText = btn.textContent;
     btn.disabled = true;
-    btn.textContent = 'Enviando...';
+    btn.textContent = 'Enviando PDF...';
 
     try {
-        const response = await fetch(APPS_SCRIPT_URL, {
+        const response = await fetch(SCRIPT_URL, {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'text/plain' }, 
@@ -623,20 +656,19 @@ async function uploadData(data) {
         const result = await response.json();
 
         if (result.status === 'success') {
-            // ✅ MELHORADO: Feedback mais informativo
-            alert('✅ Relatório salvo com sucesso!\n\n📄 PDF: ' + result.docUrl + '\n📊 Registro ID: ' + result.registroId);
+            alert('PDF da OS salvo com sucesso!\n\nPDF: ' + result.pdfUrl);
+            // Abrir o PDF em nova aba
+            if (result.pdfUrl) {
+                window.open(result.pdfUrl, '_blank');
+            }
         } else {
             throw new Error(result.message || 'Erro desconhecido no Apps Script.');
         }
 
     } catch (error) {
         console.error("Erro no envio:", error);
-        alert('❌ Falha ao salvar no Google Drive.\nErro: ' + error.message);
+        alert('Falha ao salvar no Google Drive. Verifique o console.\nErro: ' + error.message);
     } finally {
-        // ✅ NOVO: Esconder loading
-        document.getElementById('loadingOverlay').style.display = 'none';
-        
-        // Restaura o botão
         btn.disabled = false;
         btn.textContent = originalText;
     }
@@ -959,28 +991,50 @@ function deleteImage(previewId, index) {
     }
 }
 
-/* ========== Gerar, salvar e imprimir ========== */
-function generateAndPrint(){
-  fillHoraTermino();
+/* ========== Gerar PDF e enviar para Google Drive ========== */
+async function generateAndPrint() {
+    // Preenche horaTermino automaticamente
+    fillHoraTermino();
 
-  const obj = gatherFormData();
+    // Coletar dados para envio
+    const obj = gatherFormData();
 
-  // ✅ ATUALIZADO: Enviar para o Google Apps Script
-  uploadData(obj);
+    // ✅ GERAR PDF DO HTML ATUAL
+    const element = document.getElementById('osForm');
+    const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `OS-${document.getElementById('numeroOS').value}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2,
+            useCORS: true,
+            logging: false
+        },
+        jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
+    };
 
-  const listKey = 'os_saved_list';
-  let list = JSON.parse(localStorage.getItem(listKey) || '[]');
-  list.push(obj);
-  localStorage.setItem(listKey, JSON.stringify(list));
+    try {
+        // Gerar PDF
+        const pdfBlob = await html2pdf().from(element).set(opt).output('blob');
+        
+        // Converter blob para base64 para envio
+        const reader = new FileReader();
+        reader.onload = function() {
+            const base64PDF = reader.result.split(',')[1];
+            
+            // Adicionar PDF aos dados para envio
+            obj.pdfBase64 = base64PDF;
+            obj.pdfFileName = `OS-${document.getElementById('numeroOS').value}.pdf`;
+            
+            // Enviar para Google Apps Script
+            uploadData(obj);
+        };
+        reader.readAsDataURL(pdfBlob);
 
-  const ano = new Date().getFullYear();
-  const key = 'os_counter_' + ano;
-  const cur = parseInt(localStorage.getItem(key) || '0',10);
-  if(!isNaN(cur)){
-    localStorage.setItem(key, String(cur));
-  }
-
-  setTimeout(()=> window.print(), 300);
+    } catch (error) {
+        console.error("Erro ao gerar PDF:", error);
+        alert('Erro ao gerar PDF: ' + error.message);
+    }
 }
 
 /* ========== Inicialização ========== */
@@ -1013,5 +1067,6 @@ window.addEventListener('load', function(){
 </script>
 </body>
 </html>
+
 
 
