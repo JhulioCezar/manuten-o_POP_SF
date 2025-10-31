@@ -178,48 +178,118 @@
     flex-direction: column;
   }
 
-  @media print{
-    body{padding:0}
-    .btn, .no-print{display:none!important}
-    header, form.card{box-shadow:none; border:none; border-radius:0}
-    .sign-canvas{border:none}
+/* ✅ MELHORIA: Layout mais estável para PDF */
+.photo-preview {
+    display: block;
+    margin: 10px 0;
+}
+
+.photo-preview-item {
+    display: inline-block;
+    margin: 5px;
+    vertical-align: top;
+}
+
+.sign-box {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 10px 0;
+    background: #f9f9f9;
+}
+
+.item {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+}
+
+@media print{
+    body{
+        padding: 0;
+        margin: 0;
+        background: #fff !important;
+        font-size: 12pt;
+    }
     
-    /* ✅ NOVAS REGRAS PARA IMPRESSÃO DE IMAGENS */
+    .container{
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .btn, .no-print, .file-input-wrapper, .delete-img-btn{
+        display: none !important;
+    }
+    
+    header, form.card{
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 10px !important;
+        background: #fff !important;
+    }
+    
+    .sign-canvas{
+        border: 1px solid #999 !important;
+    }
+    
+    /* ✅ CORREÇÃO: Melhor visualização de imagens no PDF */
     .photo-preview-item {
-        display: block;
-        margin: 15px 0;
-        page-break-inside: avoid;
+        display: block !important;
+        margin: 10px 0 !important;
+        page-break-inside: avoid !important;
     }
     
     .photo-preview-item img {
         width: auto !important;
         height: auto !important;
         max-width: 100% !important;
-        max-height: 400px !important;
+        max-height: 300px !important;
         object-fit: contain !important;
-        border: 1px solid #ccc;
-        border-radius: 6px;
+        border: 1px solid #ccc !important;
+        border-radius: 4px !important;
     }
     
-    .delete-img-btn {
-        display: none !important;
-    }
-    
-    /* Garantir que as seções não quebrem no meio */
+    /* ✅ CORREÇÃO: Melhor espaçamento para impressão */
     .item {
-        page-break-inside: avoid;
-        break-inside: avoid;
-    }
-    
-    /* Melhor espaçamento para impressão */
-    .item {
-        margin-bottom: 20px;
-        padding: 12px;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-bottom: 15px !important;
+        padding: 10px !important;
         background: #fff !important;
-        border: 1px solid #ddd !important;
+        border: 1px solid #eee !important;
+    }
+    
+    .section {
+        margin-top: 15px !important;
+        padding-top: 10px !important;
+        border-top: 1px solid #ddd !important;
+    }
+    
+    /* ✅ CORREÇÃO: Melhor legibilidade do texto */
+    h1, h2, h3 {
+        color: #000 !important;
+        margin: 8px 0 !important;
+    }
+    
+    .meta {
+        color: #666 !important;
+        font-size: 10pt !important;
+    }
+    
+    /* ✅ CORREÇÃO: Evitar quebras indesejadas */
+    .row {
+        display: block !important;
+    }
+    
+    .col {
+        margin-bottom: 8px !important;
     }
 }
-</style>
+  </style>
 </head>
 <body>
   <!-- ✅ NOVO: Loading Overlay -->
@@ -943,7 +1013,7 @@ function deleteImage(previewId, index) {
     }
 }
 
-/* ========== ✅ ATUALIZADO: Gerar PDF apenas local ========== */
+/* ========== ✅ CORRIGIDO: Gerar PDF apenas local ========== */
 async function generateAndPrint() {
     try {
         // Preenche horaTermino automaticamente
@@ -955,36 +1025,48 @@ async function generateAndPrint() {
         btn.disabled = true;
         btn.textContent = 'Gerando PDF...';
 
-        // ✅ GERAR E BAIXAR PDF LOCALMENTE
+        // ✅ CORREÇÃO: Clonar o elemento para não afetar a tela
         const element = document.getElementById('osForm');
-        const numeroOS = document.getElementById('numeroOS').value;
+        const clone = element.cloneNode(true);
         
+        // ✅ CORREÇÃO: Remover botões da cópia
+        const buttons = clone.querySelectorAll('.no-print, .btn');
+        buttons.forEach(btn => btn.remove());
+
+        // ✅ CORREÇÃO: Configurações otimizadas para PDF
         const opt = {
-            margin: [0.5, 0.5, 0.5, 0.5],
-            filename: `OS-${numeroOS}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
+            margin: 0.5,
+            filename: `OS-${document.getElementById('numeroOS').value}.pdf`,
+            image: { 
+                type: 'jpeg', 
+                quality: 0.95 
+            },
             html2canvas: { 
                 scale: 2,
                 useCORS: true,
-                logging: false
+                logging: false,
+                backgroundColor: '#ffffff',
+                removeContainer: true
             },
-            jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait',
+                compress: true
+            },
+            pagebreak: { 
+                mode: ['avoid-all', 'css', 'legacy'] 
+            }
         };
 
-        // Gerar e baixar PDF automaticamente
-        await html2pdf().from(element).set(opt).save();
+        // ✅ CORREÇÃO: Gerar PDF da cópia limpa
+        await html2pdf().set(opt).from(clone).save();
         
-        // ✅ SALVAR RASCUNHO LOCAL (OPCIONAL)
-        const formData = gatherFormData();
-        const listKey = 'os_saved_list';
-        let list = JSON.parse(localStorage.getItem(listKey) || '[]');
-        list.push(formData);
-        localStorage.setItem(listKey, JSON.stringify(list));
-
         // Feedback de sucesso
         btn.disabled = false;
         btn.textContent = originalText;
-        alert('✅ PDF gerado e baixado com sucesso!\n\nArquivo: OS-' + numeroOS + '.pdf');
+        
+        alert('✅ PDF gerado e baixado com sucesso!\n\nArquivo: OS-' + document.getElementById('numeroOS').value + '.pdf');
 
     } catch (error) {
         console.error("Erro ao gerar PDF:", error);
@@ -993,10 +1075,9 @@ async function generateAndPrint() {
         // Restaurar botão em caso de erro
         const btn = document.querySelector('button[onclick="generateAndPrint()"]');
         btn.disabled = false;
-        btn.textContent = 'Gerar e Imprimir';
+        btn.textContent = 'Gerar e Baixar PDF';
     }
 }
-
 /* ========== Inicialização ========== */
 window.addEventListener('load', function(){
   document.getElementById('btnUseNow').addEventListener('click', function(){
