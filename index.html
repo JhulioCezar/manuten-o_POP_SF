@@ -3,10 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<!-- ✅ ALTERADO: Substituir html2pdf por jsPDF + html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <title>Ordem de Serviço – Manutenção Preventiva POP</title>
 <!-- ✅ NOVO: Meta tags PWA -->
-<meta name="theme-color" content="#0d6efd">
+<meta name="theme-color" content="#0d6efd"/>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Manutenção POP">
@@ -178,118 +182,48 @@
     flex-direction: column;
   }
 
-/* ✅ MELHORIA: Layout mais estável para PDF */
-.photo-preview {
-    display: block;
-    margin: 10px 0;
-}
-
-.photo-preview-item {
-    display: inline-block;
-    margin: 5px;
-    vertical-align: top;
-}
-
-.sign-box {
-    border: 1px solid #ccc;
-    padding: 10px;
-    margin: 10px 0;
-    background: #f9f9f9;
-}
-
-.item {
-    background: #fafafa;
-    border: 1px solid #e0e0e0;
-    padding: 12px;
-    margin-bottom: 12px;
-    border-radius: 6px;
-}
-
-@media print{
-    body{
-        padding: 0;
-        margin: 0;
-        background: #fff !important;
-        font-size: 12pt;
-    }
+  @media print{
+    body{padding:0}
+    .btn, .no-print{display:none!important}
+    header, form.card{box-shadow:none; border:none; border-radius:0}
+    .sign-canvas{border:none}
     
-    .container{
-        max-width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    
-    .btn, .no-print, .file-input-wrapper, .delete-img-btn{
-        display: none !important;
-    }
-    
-    header, form.card{
-        box-shadow: none !important;
-        border: 1px solid #ddd !important;
-        border-radius: 0 !important;
-        margin: 0 !important;
-        padding: 10px !important;
-        background: #fff !important;
-    }
-    
-    .sign-canvas{
-        border: 1px solid #999 !important;
-    }
-    
-    /* ✅ CORREÇÃO: Melhor visualização de imagens no PDF */
+    /* ✅ NOVAS REGRAS PARA IMPRESSÃO DE IMAGENS */
     .photo-preview-item {
-        display: block !important;
-        margin: 10px 0 !important;
-        page-break-inside: avoid !important;
+        display: block;
+        margin: 15px 0;
+        page-break-inside: avoid;
     }
     
     .photo-preview-item img {
         width: auto !important;
         height: auto !important;
         max-width: 100% !important;
-        max-height: 300px !important;
+        max-height: 400px !important;
         object-fit: contain !important;
-        border: 1px solid #ccc !important;
-        border-radius: 4px !important;
+        border: 1px solid #ccc;
+        border-radius: 6px;
     }
     
-    /* ✅ CORREÇÃO: Melhor espaçamento para impressão */
+    .delete-img-btn {
+        display: none !important;
+    }
+    
+    /* Garantir que as seções não quebrem no meio */
     .item {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        margin-bottom: 15px !important;
-        padding: 10px !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    
+    /* Melhor espaçamento para impressão */
+    .item {
+        margin-bottom: 20px;
+        padding: 12px;
         background: #fff !important;
-        border: 1px solid #eee !important;
-    }
-    
-    .section {
-        margin-top: 15px !important;
-        padding-top: 10px !important;
-        border-top: 1px solid #ddd !important;
-    }
-    
-    /* ✅ CORREÇÃO: Melhor legibilidade do texto */
-    h1, h2, h3 {
-        color: #000 !important;
-        margin: 8px 0 !important;
-    }
-    
-    .meta {
-        color: #666 !important;
-        font-size: 10pt !important;
-    }
-    
-    /* ✅ CORREÇÃO: Evitar quebras indesejadas */
-    .row {
-        display: block !important;
-    }
-    
-    .col {
-        margin-bottom: 8px !important;
+        border: 1px solid #ddd !important;
     }
 }
-  </style>
+</style>
 </head>
 <body>
   <!-- ✅ NOVO: Loading Overlay -->
@@ -309,9 +243,6 @@
     <h1>ORDEM DE SERVIÇO – MANUTENÇÃO PREVENTIVA POP</h1>
 
     <form id="osForm" class="card" onsubmit="return false;">
-      <!-- SEU FORMULÁRIO COMPLETO ORIGINAL AQUI -->
-      <!-- Mantendo TODAS as 1000+ linhas do seu HTML original -->
-      
       <!-- Cabeçalho dados -->
       <div class="row">
         <div class="col">
@@ -648,7 +579,6 @@
       <!-- ações -->
       <div class="footer-actions no-print">
         <button type="button" class="btn secondary" onclick="limparFormulario()">Limpar Formulário</button>
-
         <button type="button" class="btn" onclick="generateAndPrint()">Gerar e Baixar PDF</button>
       </div>
     </form>
@@ -1013,80 +943,349 @@ function deleteImage(previewId, index) {
     }
 }
 
-/* ========== ✅ CORRIGIDO: Gerar PDF apenas local ========== */
+/* ========== ✅ ALTERADO: Gerar PDF com jsPDF (nova implementação) ========== */
 async function generateAndPrint() {
+    if (!validarFormularioManutencao()) return;
+    
     try {
-        // Preenche horaTermino automaticamente
-        fillHoraTermino();
-
         // Mostrar loading
         const btn = document.querySelector('button[onclick="generateAndPrint()"]');
         const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = 'Gerando PDF...';
 
-        // ✅ CORREÇÃO: Clonar o elemento para não afetar a tela
-        const element = document.getElementById('osForm');
-        const clone = element.cloneNode(true);
-        
-        // ✅ CORREÇÃO: Remover botões da cópia
-        const buttons = clone.querySelectorAll('.no-print, .btn');
-        buttons.forEach(btn => btn.remove());
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const margin = 15;
+        let y = 15;
 
-        // ✅ CORREÇÃO: Configurações otimizadas para PDF
-        const opt = {
-            margin: 0.5,
-            filename: `OS-${document.getElementById('numeroOS').value}.pdf`,
-            image: { 
-                type: 'jpeg', 
-                quality: 0.95 
-            },
-            html2canvas: { 
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff',
-                removeContainer: true
-            },
-            jsPDF: { 
-                unit: 'mm', 
-                format: 'a4', 
-                orientation: 'portrait',
-                compress: true
-            },
-            pagebreak: { 
-                mode: ['avoid-all', 'css', 'legacy'] 
+        // Logo
+        let logoBase64 = null;
+        try { 
+            logoBase64 = await getImageBase64('https://i.imgur.com/SEr4lkm.png'); 
+        } catch(e) { 
+            console.warn('Logo não carregada:', e); 
+        }
+        
+        if (logoBase64) { 
+            const logoW = 50, logoX = (pageWidth - logoW) / 2; 
+            pdf.addImage(logoBase64, 'PNG', logoX, y, logoW, 12); 
+            y += 18; 
+        }
+
+        // Título
+        pdf.setFontSize(18);
+        pdf.setFont(undefined, 'bold');
+        pdf.text('ORDEM DE SERVIÇO – MANUTENÇÃO PREVENTIVA POP', pageWidth / 2, y, { align: 'center' });
+        y += 12;
+
+        // Informações Gerais
+        pdf.setFontSize(11);
+        pdf.setFont(undefined, 'normal');
+        
+        const formData = gatherFormData();
+        
+        // Número OS
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Nº da OS:', margin, y);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(formData.numeroOS || 'N/A', margin + 20, y);
+        
+        // Data/Hora
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Data/Hora:', pageWidth / 2, y);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(formData.dataHora || 'N/A', pageWidth / 2 + 25, y);
+        y += 7;
+
+        // POP
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Local (POP):', margin, y);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(formData.pop || 'N/A', margin + 25, y);
+        
+        // Endereço
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Endereço:', pageWidth / 2, y);
+        pdf.setFont(undefined, 'normal');
+        const enderecoLines = pdf.splitTextToSize(formData.endereco || 'N/A', 70);
+        pdf.text(enderecoLines, pageWidth / 2 + 20, y);
+        y += (enderecoLines.length * 5) + 5;
+
+        // Horários
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Hora Início:', margin, y);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(formData.horaInicio || 'N/A', margin + 25, y);
+        
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Hora Término:', pageWidth / 2, y);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(formData.horaTermino || 'N/A', pageWidth / 2 + 30, y);
+        y += 10;
+
+        // Seção 1: Infraestrutura
+        pdf.setFont(undefined, 'bold');
+        pdf.setFontSize(12);
+        pdf.text('1. Verificação da Infraestrutura e Condições Ambientais', margin, y);
+        y += 8;
+
+        // Itens da seção 1
+        const itensSecao1 = [
+            { titulo: '1.1 Limpeza do rack e equipamentos', status: formData.limpeza_rack_status, obs: formData.limpeza_rack_obs },
+            { titulo: '1.2 Organização dos cabos e patch cords', status: formData.cabos_status, obs: formData.cabos_obs },
+            { titulo: '1.3 Temperatura ambiente (°C)', status: formData.temp_status, obs: formData.temp_obs },
+            { titulo: '1.4 Ventilação / ar-condicionado', status: formData.vent_status, obs: formData.vent_obs },
+            { titulo: '1.5 Porta e fechaduras do POP', status: formData.porta_status, obs: formData.porta_obs },
+            { titulo: '1.6 Identificação de equipamentos e cabos', status: formData.id_equip_status, obs: formData.id_equip_obs }
+        ];
+
+        pdf.setFontSize(10);
+        for (const item of itensSecao1) {
+            if (y > 250) {
+                pdf.addPage();
+                y = 20;
             }
-        };
 
-        // ✅ CORREÇÃO: Gerar PDF da cópia limpa
-        await html2pdf().set(opt).from(clone).save();
+            pdf.setFont(undefined, 'bold');
+            pdf.text(item.titulo, margin, y);
+            
+            pdf.setFont(undefined, 'normal');
+            pdf.text(`Status: ${item.status || 'N/A'}`, margin + 80, y);
+            
+            y += 5;
+            
+            if (item.obs) {
+                const obsLines = pdf.splitTextToSize(`Obs: ${item.obs}`, pageWidth - margin * 2);
+                pdf.text(obsLines, margin, y);
+                y += (obsLines.length * 4) + 3;
+            } else {
+                y += 5;
+            }
+            
+            // Linha separadora
+            pdf.line(margin, y, pageWidth - margin, y);
+            y += 5;
+        }
+
+        // Seção 2: Equipamentos Principais
+        y += 5;
+        pdf.setFont(undefined, 'bold');
+        pdf.setFontSize(12);
+        pdf.text('2. Manutenção dos Equipamentos Principais', margin, y);
+        y += 8;
+
+        const itensSecao2 = [
+            { titulo: '2.1 OLT (Optical Line Terminal)', status: formData.olt_status, obs: formData.olt_obs },
+            { titulo: '2.2 Switch (SW)', status: formData.sw_status, obs: formData.sw_obs },
+            { titulo: '2.3 Retificadora e Baterias', status: formData.ret_status, obs: formData.ret_obs }
+        ];
+
+        pdf.setFontSize(10);
+        for (const item of itensSecao2) {
+            if (y > 250) {
+                pdf.addPage();
+                y = 20;
+            }
+
+            pdf.setFont(undefined, 'bold');
+            pdf.text(item.titulo, margin, y);
+            
+            pdf.setFont(undefined, 'normal');
+            pdf.text(`Status: ${item.status || 'N/A'}`, margin + 80, y);
+            
+            y += 5;
+            
+            if (item.obs) {
+                const obsLines = pdf.splitTextToSize(`Obs: ${item.obs}`, pageWidth - margin * 2);
+                pdf.text(obsLines, margin, y);
+                y += (obsLines.length * 4) + 3;
+            } else {
+                y += 5;
+            }
+            
+            pdf.line(margin, y, pageWidth - margin, y);
+            y += 5;
+        }
+
+        // Ações Corretivas
+        if (formData.acoes_realizadas || formData.observacoes_recomendacoes) {
+            y += 5;
+            pdf.setFont(undefined, 'bold');
+            pdf.setFontSize(12);
+            pdf.text('3. Ações Corretivas e Observações', margin, y);
+            y += 8;
+
+            pdf.setFontSize(10);
+            pdf.setFont(undefined, 'normal');
+            
+            if (formData.acoes_realizadas) {
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Ações realizadas:', margin, y);
+                y += 5;
+                pdf.setFont(undefined, 'normal');
+                const acoesLines = pdf.splitTextToSize(formData.acoes_realizadas, pageWidth - margin * 2);
+                pdf.text(acoesLines, margin, y);
+                y += (acoesLines.length * 4) + 5;
+            }
+
+            if (formData.observacoes_recomendacoes) {
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Observações/Recomendações:', margin, y);
+                y += 5;
+                pdf.setFont(undefined, 'normal');
+                const obsLines = pdf.splitTextToSize(formData.observacoes_recomendacoes, pageWidth - margin * 2);
+                pdf.text(obsLines, margin, y);
+                y += (obsLines.length * 4) + 5;
+            }
+        }
+
+        // Próxima Manutenção
+        if (formData.dataEstimada) {
+            y += 5;
+            pdf.setFont(undefined, 'bold');
+            pdf.setFontSize(12);
+            pdf.text('4. Próxima Manutenção', margin, y);
+            y += 8;
+
+            pdf.setFontSize(10);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(`Data estimada: ${formData.dataEstimada}`, margin, y);
+            y += 10;
+        }
+
+        // Assinaturas (nova página)
+        pdf.addPage();
+        y = 30;
         
-        // Feedback de sucesso
+        pdf.setFont(undefined, 'bold');
+        pdf.setFontSize(14);
+        pdf.text('ASSINATURAS', pageWidth / 2, y, { align: 'center' });
+        y += 20;
+
+        // Assinatura Técnico
+        if (formData.sigTech) {
+            try {
+                const sigTechProps = pdf.getImageProperties(formData.sigTech);
+                const sigW = 70;
+                const sigH = (sigTechProps.height * sigW) / sigTechProps.width;
+                pdf.addImage(formData.sigTech, 'PNG', margin + 20, y, sigW, sigH);
+                pdf.line(margin + 20, y + sigH + 2, margin + 20 + sigW, y + sigH + 2);
+                pdf.setFontSize(10);
+                pdf.text('Assinatura do Técnico', margin + 20 + (sigW / 2), y + sigH + 8, { align: 'center' });
+            } catch(e) {
+                console.warn('Erro ao adicionar assinatura técnica:', e);
+            }
+        }
+
+        // Assinatura Responsável
+        if (formData.sigResp) {
+            try {
+                const sigRespProps = pdf.getImageProperties(formData.sigResp);
+                const sigW = 70;
+                const sigH = (sigRespProps.height * sigW) / sigRespProps.width;
+                pdf.addImage(formData.sigResp, 'PNG', pageWidth - margin - 20 - sigW, y, sigW, sigH);
+                pdf.line(pageWidth - margin - 20 - sigW, y + sigH + 2, pageWidth - margin - 20, y + sigH + 2);
+                pdf.setFontSize(10);
+                pdf.text('Assinatura do Responsável', pageWidth - margin - 20 - (sigW / 2), y + sigH + 8, { align: 'center' });
+            } catch(e) {
+                console.warn('Erro ao adicionar assinatura responsável:', e);
+            }
+        }
+
+        // Imagens das verificações
+        if (formData.images && Object.keys(formData.images).length > 0) {
+            for (const [previewId, images] of Object.entries(formData.images)) {
+                for (let i = 0; i < images.length; i++) {
+                    if (images[i]) {
+                        try {
+                            pdf.addPage();
+                            y = 20;
+                            pdf.setFont(undefined, 'bold');
+                            pdf.setFontSize(14);
+                            pdf.text(`Imagem de Comprovação - ${previewId.replace('preview', 'Item ')}`, pageWidth / 2, y, { align: 'center' });
+                            y += 15;
+
+                            const imgProps = pdf.getImageProperties(images[i]);
+                            const maxW = pageWidth - margin * 2;
+                            const maxH = 200;
+                            const ratio = Math.min(maxW / imgProps.width, maxH / imgProps.height);
+                            const w = imgProps.width * ratio;
+                            const h = imgProps.height * ratio;
+                            const x = (pageWidth - w) / 2;
+                            
+                            pdf.addImage(images[i], 'JPEG', x, y, w, h);
+                        } catch(e) {
+                            console.warn('Erro ao adicionar imagem ao PDF:', e);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Salvar PDF
+        const fileName = `OS-${formData.numeroOS || 'manutencao'}.pdf`;
+        pdf.save(fileName);
+
+        // Restaurar botão
         btn.disabled = false;
         btn.textContent = originalText;
         
-        alert('✅ PDF gerado e baixado com sucesso!\n\nArquivo: OS-' + document.getElementById('numeroOS').value + '.pdf');
+        alert('✅ PDF gerado com sucesso!\n\nArquivo: ' + fileName);
 
     } catch (error) {
         console.error("Erro ao gerar PDF:", error);
         alert('❌ Erro ao gerar PDF: ' + error.message);
         
-        // Restaurar botão em caso de erro
         const btn = document.querySelector('button[onclick="generateAndPrint()"]');
         btn.disabled = false;
         btn.textContent = 'Gerar e Baixar PDF';
     }
 }
-/* ========== Inicialização ========== */
-window.addEventListener('load', function(){
-  document.getElementById('btnUseNow').addEventListener('click', function(){
-    const now = new Date();
-    const pad = n => String(n).padStart(2, '0');
-    const dtLocal = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
-    document.getElementById('dataHora').value = dtLocal;
-  });
-});
+
+/* ========== ✅ NOVA FUNÇÃO: Validar formulário manutenção ========== */
+function validarFormularioManutencao() {
+    const faltando = [];
+
+    const numeroOS = document.getElementById('numeroOS').value.trim();
+    if (!numeroOS) faltando.push("Número da OS");
+
+    const pop = document.getElementById('popSelect').value.trim();
+    if (!pop) faltando.push("Local (POP)");
+
+    const endereco = document.getElementById('endereco').value.trim();
+    if (!endereco) faltando.push("Endereço");
+
+    // Verificar se há pelo menos uma verificação preenchida
+    const temVerificacao = document.querySelectorAll('select[name$="_status"]:not([value=""])').length > 0;
+    if (!temVerificacao) faltando.push("Pelo menos uma verificação preenchida");
+
+    if (faltando.length > 0) {
+        alert("⚠️ Antes de gerar o PDF, preencha os seguintes campos:\n\n• " + faltando.join("\n• "));
+        return false;
+    }
+
+    return true;
+}
+
+/* ========== ✅ NOVA FUNÇÃO: Converter imagem para base64 ========== */
+function getImageBase64(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = (e) => reject(e);
+        img.src = url;
+    });
+}
 
 /* ========== ✅ NOVO: Limpar todo o formulário ========== */
 function limparFormulario() {
@@ -1140,6 +1339,16 @@ function limparFormulario() {
     alert('Formulário limpo com sucesso! Pronto para criar uma nova OS.');
 }
 
+/* ========== Inicialização ========== */
+window.addEventListener('load', function(){
+  document.getElementById('btnUseNow').addEventListener('click', function(){
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const dtLocal = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+    document.getElementById('dataHora').value = dtLocal;
+  });
+});
+
 window.addEventListener('load', function(){
   populatePOP();
   gerarNumeroOS();
@@ -1157,57 +1366,6 @@ window.addEventListener('load', function(){
   initSignatureCanvas('sigTech');
   initSignatureCanvas('sigResp');
 });
-// ✅ INSTALAÇÃO PWA - Botão e eventos
-let deferredPrompt;
-const installButton = document.createElement('button');
-
-// Criar botão de instalação
-installButton.innerHTML = '📱 Instalar App';
-installButton.className = 'btn no-print';
-installButton.style.background = '#28a745';
-installButton.style.margin = '10px 5px';
-installButton.style.display = 'none';
-installButton.onclick = installPWA;
-
-// Adicionar botão antes dos outros botões
-const footerActions = document.querySelector('.footer-actions');
-if (footerActions) {
-    footerActions.parentNode.insertBefore(installButton, footerActions);
-}
-
-// Evento quando o PWA pode ser instalado
-window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('beforeinstallprompt disparado');
-    e.preventDefault();
-    deferredPrompt = e;
-    installButton.style.display = 'inline-block';
-});
-
-// Função para instalar
-function installPWA() {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                console.log('Usuário aceitou instalação');
-                installButton.style.display = 'none';
-            }
-            deferredPrompt = null;
-        });
-    }
-}
-
-// Verificar se já está instalado
-window.addEventListener('appinstalled', (evt) => {
-    console.log('App instalado com sucesso!');
-    installButton.style.display = 'none';
-});
-
-// Detectar modo standalone (já instalado)
-if (window.matchMedia('(display-mode: standalone)').matches) {
-    console.log('Executando como PWA instalado');
-    installButton.style.display = 'none';
-}
 </script>
 </body>
 </html>
