@@ -6,7 +6,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <title>Ordem de Serviço – Manutenção Preventiva POP</title>
 <!-- ✅ NOVO: Meta tags PWA -->
-<meta name="theme-color" content="#0d6efd"/>
+<meta name="theme-color" content="#0d6efd">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Manutenção POP">
@@ -1076,6 +1076,57 @@ window.addEventListener('load', function(){
   initSignatureCanvas('sigTech');
   initSignatureCanvas('sigResp');
 });
+// ✅ INSTALAÇÃO PWA - Botão e eventos
+let deferredPrompt;
+const installButton = document.createElement('button');
+
+// Criar botão de instalação
+installButton.innerHTML = '📱 Instalar App';
+installButton.className = 'btn no-print';
+installButton.style.background = '#28a745';
+installButton.style.margin = '10px 5px';
+installButton.style.display = 'none';
+installButton.onclick = installPWA;
+
+// Adicionar botão antes dos outros botões
+const footerActions = document.querySelector('.footer-actions');
+if (footerActions) {
+    footerActions.parentNode.insertBefore(installButton, footerActions);
+}
+
+// Evento quando o PWA pode ser instalado
+window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('beforeinstallprompt disparado');
+    e.preventDefault();
+    deferredPrompt = e;
+    installButton.style.display = 'inline-block';
+});
+
+// Função para instalar
+function installPWA() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('Usuário aceitou instalação');
+                installButton.style.display = 'none';
+            }
+            deferredPrompt = null;
+        });
+    }
+}
+
+// Verificar se já está instalado
+window.addEventListener('appinstalled', (evt) => {
+    console.log('App instalado com sucesso!');
+    installButton.style.display = 'none';
+});
+
+// Detectar modo standalone (já instalado)
+if (window.matchMedia('(display-mode: standalone)').matches) {
+    console.log('Executando como PWA instalado');
+    installButton.style.display = 'none';
+}
 </script>
 </body>
 </html>
