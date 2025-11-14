@@ -2,13 +2,13 @@
 //  SERVICE WORKER - VERSÃO FINAL
 // ===============================
 
-const VERSION = "v3.0.0";
+const VERSION = "v3.0.1";
 const CACHE_NAME = "manutencao-pop-" + VERSION;
 
 // Caminho base do seu GitHub Pages
 const BASE = "/manuten-o_POP_SF/";
 
-// Arquivos a serem cacheados
+// Arquivos a serem cacheados - ATUALIZADO com as bibliotecas corretas
 const urlsToCache = [
   BASE,
   BASE + "index.html",
@@ -18,7 +18,10 @@ const urlsToCache = [
   BASE + "apple-touch-icon.png",
   BASE + "favicon.ico",
   BASE + "favicon-96x96.png",
-  "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js",
+  // ✅ CORRIGIDO: Bibliotecas usadas no HTML
+  "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
   "https://i.imgur.com/SEr4lkm.png"
 ];
 
