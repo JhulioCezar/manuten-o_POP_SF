@@ -2,12 +2,12 @@
   "name": "Sistema de Manutenção POP",
   "short_name": "Manutenção POP",
   "description": "Sistema para controle de manutenções preventivas e corretivas",
-  "start_url": "/",
+  "start_url": "/manuten-o_POP_SF/",
   "display": "standalone",
   "background_color": "#0d6efd",
   "theme_color": "#0d6efd",
   "orientation": "portrait-primary",
-  "scope": "/",
+  "scope": "/manuten-o_POP_SF/",
   "lang": "pt-BR",
   "categories": ["business", "productivity"],
   "icons": [
@@ -25,3 +25,4 @@
     }
   ]
 }
+
