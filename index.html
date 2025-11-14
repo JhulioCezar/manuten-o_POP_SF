@@ -16,12 +16,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Manutenção POP">
-<link rel="icon" type="image/png" href="android-icon-192x192.png">
-<link rel="apple-touch-icon" href="android-icon-192x192.png">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="icon" type="image/png" sizes="96x96" href="/icon-96x96.png">
+<link rel="icon" type="image/png" href="./favicon-96x96.png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/x-icon" href="./favicon.ico">
 
 <style>
   :root{
@@ -225,6 +223,67 @@
     flex-direction: column;
   }
 
+  /* ✅ CORREÇÃO: Melhorar visualização de campos obrigatórios não preenchidos */
+  .campo-obrigatorio {
+    border: 2px solid #dc3545 !important;
+    background-color: #fff5f5 !important;
+  }
+
+  /* ✅ NOVO: Status indicators */
+  .status-ok { color: #198754; font-weight: bold; }
+  .status-nao-ok { color: #dc3545; font-weight: bold; }
+
+  /* ✅ ESTILOS DOS BOTÕES FLUTUANTES PWA */
+  .pwa-buttons-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .pwa-button {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+    animation: slideInUp 0.5s ease;
+  }
+
+  .pwa-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  }
+
+  .install-button {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    color: white;
+  }
+
+  .update-button {
+    background: linear-gradient(135deg, #198754, #146c43);
+    color: white;
+  }
+
+  /* Animação de entrada */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   @media print{
     body{padding:0}
     .btn, .no-print{display:none!important}
@@ -265,6 +324,47 @@
         background: #fff !important;
         border: 1px solid #ddd !important;
     }
+}
+
+/* ✅ NOVO: Responsividade melhorada para mobile */
+@media (max-width: 768px) {
+  .row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .col {
+    min-width: 100%;
+  }
+  
+  .footer-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .footer-actions .btn {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .datetime-group {
+    flex-direction: column;
+  }
+  
+  .datetime-group .btn {
+    width: 100%;
+  }
+
+  /* Responsividade para botões PWA */
+  .pwa-buttons-container {
+    bottom: 15px;
+    right: 15px;
+  }
+  
+  .pwa-button {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
 }
 </style>
 </head>
@@ -635,18 +735,110 @@
     </form>
   </div>
 
+  <!-- ✅ BOTÕES FLUTUANTES PWA -->
+  <div id="pwa-buttons" class="pwa-buttons-container">
+    <!-- Botão de Instalar App -->
+    <button id="installButton" class="pwa-button install-button" style="display: none;">
+      📱 Instalar App
+    </button>
+    
+    <!-- Botão de Atualização Disponível -->
+    <button id="updateButton" class="pwa-button update-button" style="display: none;">
+      🔄 Atualizar App
+    </button>
+  </div>
+
 <script>
 // ✅ NOVO: Service Worker Registration
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/service-worker.js')
+        navigator.serviceWorker.register('./service-worker.js')
             .then(function(registration) {
                 console.log('ServiceWorker registrado: ', registration.scope);
+                
+                // Verificar se há atualização disponível
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    console.log('Nova versão do Service Worker encontrada!');
+                    
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            console.log('Nova versão pronta para atualização!');
+                            document.getElementById('updateButton').style.display = 'block';
+                        }
+                    });
+                });
             })
             .catch(function(error) {
                 console.log('Falha no ServiceWorker: ', error);
             });
     });
+}
+
+// ✅ CONTROLE DE INSTALAÇÃO DO PWA
+let deferredPrompt;
+const installButton = document.getElementById('installButton');
+const updateButton = document.getElementById('updateButton');
+
+// Evento disparado quando o PWA pode ser instalado
+window.addEventListener('beforeinstallprompt', (e) => {
+  console.log('📱 PWA pode ser instalado');
+  e.preventDefault();
+  deferredPrompt = e;
+  installButton.style.display = 'block';
+});
+
+// Clique no botão de instalação
+installButton.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  
+  installButton.textContent = 'Instalando...';
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  
+  if (outcome === 'accepted') {
+    console.log('✅ Usuário aceitou a instalação');
+    installButton.style.display = 'none';
+    installButton.textContent = '📱 Instalar App';
+  } else {
+    console.log('❌ Usuário recusou a instalação');
+    installButton.textContent = '📱 Instalar App';
+  }
+  
+  deferredPrompt = null;
+});
+
+// Clique no botão de atualização
+updateButton.addEventListener('click', () => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(registration => {
+      registration.update().then(() => {
+        console.log('🔄 Atualização aplicada!');
+        updateButton.textContent = 'Atualizado!';
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      });
+    });
+  }
+});
+
+// ✅ VERIFICAR SE JÁ ESTÁ INSTALADO COMO PWA
+window.addEventListener('appinstalled', () => {
+  console.log('✅ PWA instalado com sucesso!');
+  installButton.style.display = 'none';
+  deferredPrompt = null;
+});
+
+// ✅ DETECTAR SE ESTÁ EM MODO PWA (TELA CHEIA)
+function isRunningAsPWA() {
+  return window.matchMedia('(display-mode: standalone)').matches || 
+         window.navigator.standalone === true;
+}
+
+// Esconder botão de instalação se já estiver em modo PWA
+if (isRunningAsPWA()) {
+  installButton.style.display = 'none';
 }
 
 // ✅ NOVO: Variável para controle do modal de imagem
@@ -798,9 +990,10 @@ function openFilePicker() {
 /* ========== ✅ NOVA FUNÇÃO: Validar campo vazio ========== */
 function validarCampoVazio(campo) {
     if (!campo.value.trim()) {
-        campo.style.border = '2px solid #dc3545';
+        campo.classList.add('campo-obrigatorio');
         campo.placeholder = '⚠️ Este campo é obrigatório!';
     } else {
+        campo.classList.remove('campo-obrigatorio');
         campo.style.border = '1px solid #ccc';
     }
 }
@@ -1661,7 +1854,8 @@ function validarFormularioManutencao() {
     // ✅ MELHORIA: Validar campos de observações
     const camposObservacoes = document.querySelectorAll('textarea[name$="_obs"], input[type="text"][name$="_obs"]');
     camposObservacoes.forEach(campo => {
-        if (!campo.value.trim() && campo.closest('.item').querySelector('select[name$="_status"]').value) {
+        const select = campo.closest('.item').querySelector('select[name$="_status"]');
+        if (select && select.value && !campo.value.trim()) {
             const itemNome = campo.closest('.item').querySelector('.title').textContent;
             faltando.push(`Observações do item: ${itemNome}`);
         }
@@ -1700,17 +1894,35 @@ function validarFormularioManutencao() {
         faltando.forEach(item => {
             if (item.includes('Observações do item:')) {
                 const itemNome = item.replace('Observações do item: ', '');
-                const campo = document.querySelector(`.title:contains("${itemNome}")`).closest('.item').querySelector('textarea[name$="_obs"], input[type="text"][name$="_obs"]');
-                if (campo) {
-                    campo.style.border = '2px solid #dc3545';
-                    campo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const items = document.querySelectorAll('.title');
+                let campoObservacao = null;
+                
+                items.forEach(title => {
+                    if (title.textContent.includes(itemNome)) {
+                        campoObservacao = title.closest('.item').querySelector('textarea[name$="_obs"], input[type="text"][name$="_obs"]');
+                    }
+                });
+                
+                if (campoObservacao) {
+                    campoObservacao.classList.add('campo-obrigatorio');
+                    campoObservacao.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             } else if (item.includes('Nome do Responsável')) {
-                document.getElementById('nomeResponsavel').style.border = '2px solid #dc3545';
-                document.getElementById('nomeResponsavel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const campo = document.getElementById('nomeResponsavel');
+                campo.classList.add('campo-obrigatorio');
+                campo.scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else if (item.includes('Assinatura')) {
-                document.getElementById('sigResp').style.border = '2px solid #dc3545';
-                document.getElementById('sigResp').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const campo = document.getElementById('sigResp');
+                campo.classList.add('campo-obrigatorio');
+                campo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else if (item.includes('Local (POP)')) {
+                const campo = document.getElementById('popSelect');
+                campo.classList.add('campo-obrigatorio');
+                campo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else if (item.includes('Endereço')) {
+                const campo = document.getElementById('endereco');
+                campo.classList.add('campo-obrigatorio');
+                campo.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         });
         
@@ -1779,7 +1991,7 @@ function limparFormulario() {
     const textareas = document.querySelectorAll('textarea');
     textareas.forEach(textarea => {
         textarea.value = '';
-        textarea.style.border = '1px solid #ccc';
+        textarea.classList.remove('campo-obrigatorio');
     });
     
     // Limpar inputs de texto
@@ -1787,8 +1999,15 @@ function limparFormulario() {
     inputs.forEach(input => {
         if (!input.id.includes('numeroOS')) { // Não limpar número da OS
             input.value = '';
-            input.style.border = '1px solid #ccc';
+            input.classList.remove('campo-obrigatorio');
         }
+    });
+    
+    // Limpar selects
+    const selects = document.querySelectorAll('select');
+    selects.forEach(select => {
+        select.value = '';
+        select.classList.remove('campo-obrigatorio');
     });
     
     alert('Formulário limpo com sucesso! Pronto para criar uma nova OS.');
