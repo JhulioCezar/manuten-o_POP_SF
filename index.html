@@ -7,6 +7,8 @@
 <!-- ✅ ALTERADO: Substituir html2pdf por jsPDF + html2canvas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- ✅ NOVO: Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <title>Ordem de Serviço – Manutenção Preventiva POP</title>
 <!-- ✅ NOVO: Meta tags PWA -->
@@ -95,7 +97,7 @@
   .btn{display:inline-block; padding:10px 14px; background:var(--primary); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:600;}
   .btn.secondary{background:#6c757d;}
   .meta{font-size:0.9rem; color:var(--muted)}
-  .footer-actions{display:flex; gap:12px; justify-content:flex-end; margin-top:18px; flex-wrap:wrap;}
+  .footer-actions{display:flex; gap:12px; justify-content:center; margin-top:18px; flex-wrap:wrap;}
 
   /* 🔧 Correção de posição do botão "Usar agora" */
   .datetime-group {
@@ -598,36 +600,32 @@
       <div class="section">
         <h2>Assinaturas</h2>
         <div class="row">
-          <div class="col">
-            <label>Assinatura do Técnico</label>
-            <div class="sign-box">
-              <canvas id="sigTech" class="sign-canvas"></canvas>
-              <div style="display:flex; gap:8px; margin-top:8px; justify-content:center;">
-                <button type="button" class="btn secondary no-print" onclick="clearSig('sigTech')">Limpar</button>
-                <button type="button" class="btn no-print" onclick="saveSig('sigTech','sigTechImg')">Salvar assinatura</button>
-              </div>
-              <input type="hidden" id="sigTechImg" />
-              <div id="sigTechPreview" style="margin-top:8px;"></div>
-            </div>
-          </div>
-
-          <div class="col">
-            <label>Assinatura do Responsável (Cliente/Supervisor)</label>
+          <div class="col" style="max-width: 400px; margin: 0 auto;">
+            <label>Assinatura do Responsável (Técnico/Encarregado)</label>
             <div class="sign-box">
               <canvas id="sigResp" class="sign-canvas"></canvas>
               <div style="display:flex; gap:8px; margin-top:8px; justify-content:center;">
                 <button type="button" class="btn secondary no-print" onclick="clearSig('sigResp')">Limpar</button>
-                <button type="button" class="btn no-print" onclick="saveSig('sigResp','sigRespImg')">Salvar assinatura</button>
+                <div class="file-input-wrapper">
+                  <button type="button" class="btn no-print" onclick="document.getElementById('fileSigInput').click()">Inserir Arquivo</button>
+                  <input type="file" id="fileSigInput" accept="image/*" style="display: none;">
+                </div>
               </div>
               <input type="hidden" id="sigRespImg" />
               <div id="sigRespPreview" style="margin-top:8px;"></div>
+            </div>
+            
+            <!-- ✅ NOVO: Campo para nome do responsável -->
+            <div style="margin-top: 15px; text-align: center;">
+              <label style="display: block; text-align: center;">Nome do Responsável pela Manutenção</label>
+              <input type="text" id="nomeResponsavel" placeholder="Digite o nome completo do responsável" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #ccc; text-align: center;" onblur="formatarNomeProprio(this)" />
             </div>
           </div>
         </div>
       </div>
 
       <!-- ações -->
-      <div class="footer-actions no-print">
+      <div class="footer-actions no-print" style="justify-content: center;">
         <button type="button" class="btn secondary" onclick="limparFormulario()">Limpar Formulário</button>
         <button type="button" class="btn" onclick="generateAndPrint()">Gerar e Baixar PDF</button>
       </div>
@@ -650,6 +648,23 @@ if ('serviceWorker' in navigator) {
 
 // ✅ NOVO: Variável para controle do modal de imagem
 let currentPreviewId = '';
+
+/* ========== ✅ CONFIGURAÇÃO SUPABASE ========== */
+// ⚠️ SUBSTITUA pelas suas credenciais do Supabase
+const SUPABASE_URL = 'https://nxptofoqzqlanwfklysd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cHRvZm9xenFsYW53ZmtseXNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxMjY5MzAsImV4cCI6MjA3ODcwMjkzMH0.XzaOvHdhlIZHRAYyiBqxx_VO1rAbsQF3F42nHhkTG0U';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ✅ VERIFICAR SE USUÁRIO ESTÁ LOGADO
+async function checkAuth() {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+        console.error('Erro ao verificar sessão:', error);
+        return null;
+    }
+    return session;
+}
 
 /* ========== Dados dos POPs (ordenados alfabeticamente) ========== */
 const pops = [
@@ -674,7 +689,6 @@ const pops = [
   {name:"Part e Alta", address:"R. João Francisco da Cunha, 39 - Conj Procom, Rio Branco - AC, 69918-632", maps:"https://maps.app.goo.gl/25wwXie6vogyE8az8"},
   {name:"Plácido de Castro", address:"R. Diamantino A De Macedo, 1112 - Plácido De Castro, Plácido de Castro - AC, 69928-000", maps:"https://maps.app.goo.gl/xGRWkw3g1c5X9JPd6"},
   {name:"Porto Acre", address:"Porto Acre, Acre, 69921-000", maps:"https://maps.app.goo.gl/CYFdELdKAQ1XAGkP8"},
-  {name:"Pra Parte Alta", address:"R. João Francisco da Cunha, 39 - Conj Procom, Rio Branco - AC, 69918-632", maps:"https://maps.app.goo.gl/25wwXie6vogyE8az8"},
   {name:"Rodrigues Alves", address:"Av. Projeto Rondon, 2-18, Rodrigues Alves - AC, 69985-000", maps:"https://maps.app.goo.gl/c9991Hv3q6eX1UdR8"},
   {name:"Sobral", address:"R. Principal, 179-1 - Palheiral, Rio Branco - AC, 69903-830", maps:"https://maps.app.goo.gl/HEW8efJ7mD5EoLx49"},
   {name:"Sena Madureira ( Cidade )", address:"R. Walter Wilton Maia, 169 - Sena Madureira, AC, 69940-000", maps:"https://maps.app.goo.gl/ZpW4qPWwk426BwQJ8"},
@@ -729,18 +743,105 @@ function validarCampoVazio(campo) {
     }
 }
 
-/* ========== Injeção do select de POPs ========== */
-function populatePOP(){
-  const sel = document.getElementById('popSelect');
-  pops.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
-  pops.forEach(p=>{
-    const opt = document.createElement('option');
-    opt.value = p.name;
-    opt.dataset.address = p.address;
-    opt.dataset.maps = p.maps;
-    opt.textContent = p.name;
-    sel.appendChild(opt);
-  });
+/* ========== ✅ NOVA FUNÇÃO: Formatar nome próprio com iniciais maiúsculas ========== */
+function formatarNomeProprio(campo) {
+    if (!campo.value.trim()) return;
+    
+    const texto = campo.value.toLowerCase();
+    const palavras = texto.split(' ');
+    const palavrasFormatadas = palavras.map(palavra => {
+        // Manter preposições, artigos e conectivos em minúsculo
+        const minusculas = ['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'com', 'por', 'para', 'sem', 'sob', 'sobre', 'entre'];
+        if (minusculas.includes(palavra)) {
+            return palavra;
+        }
+        // Capitalizar primeira letra das demais palavras
+        return palavra.charAt(0).toUpperCase() + palavra.slice(1);
+    });
+    
+    campo.value = palavrasFormatadas.join(' ');
+}
+
+/* ========== ✅ CARREGAR POPs DO SUPABASE ========== */
+async function populatePOP(){
+  try {
+    console.log('Carregando POPs do Supabase...');
+    
+    const { data: pops, error } = await supabase
+      .from('pops')
+      .select('*')
+      .order('nome');
+    
+    if (error) throw error;
+    
+    const sel = document.getElementById('popSelect');
+    sel.innerHTML = '<option value="">-- Selecione o POP --</option>';
+    
+    pops.forEach(pop => {
+      const opt = document.createElement('option');
+      opt.value = pop.nome;
+      opt.dataset.address = pop.endereco;
+      opt.dataset.maps = pop.maps_url;
+      opt.textContent = pop.nome;
+      sel.appendChild(opt);
+    });
+    
+    console.log(`✅ ${pops.length} POPs carregados do Supabase`);
+    
+  } catch (error) {
+    console.error('❌ Erro ao carregar POPs do Supabase:', error);
+    
+    // ✅ FALLBACK: Usar POPs locais em caso de erro
+    const sel = document.getElementById('popSelect');
+    sel.innerHTML = '<option value="">-- Selecione o POP --</option>';
+    
+    const popsLocal = [
+      {name:"4 Bocas", address:"Br 364 km 25 sentido - Porto Velho, Rio Branco - AC, 69900-000", maps:"https://maps.app.goo.gl/iRFgi4HiX6qroz1X8"},
+      {name:"Acrelândia", address:"Acrelândia, Acre", maps:"https://maps.app.goo.gl/uAzxTA8C54GQtmTE8"},
+      {name:"Albert Sampaio", address:"Rodovia BR-364 Albert Sampaio, Rio Branco - AC, 69909-040", maps:"https://maps.app.goo.gl/1kQs6jH4PpJN8mKf8"},
+      {name:"Assis Brasil", address:"Ipiranga, Assis Brasil - AC, 69935-000", maps:"https://maps.app.goo.gl/zafXZppgL2Yae3Bu5"},
+      {name:"Belo Jardim", address:"Tv. Isaías, 208 - Belo Jardim I, Rio Branco - AC, 69907-848", maps:"https://maps.app.goo.gl/FnPmXhj7hSdbp6sA6"},
+      {name:"Benfica", address:"Benfica, Rio Branco, Acre", maps:"https://maps.app.goo.gl/6BLpDpxT9QFggr5eA"},
+      {name:"Bom Jesus", address:"Vila Acre, Rio Branco - AC", maps:"https://maps.app.goo.gl/7ARa5NroqG1rEUMq7"},
+      {name:"Bujari", address:"Bujari, AC, 69923-000", maps:"https://maps.app.goo.gl/gYnGmjFqhXHHL52aA"},
+      {name:"Calafate", address:"R. Abunã, 81 - Portal da Amazônia, Rio Branco - AC, 69915-840", maps:"https://maps.app.goo.gl/XeTCvk7LhbRCwkpNA"},
+      {name:"Capixaba", address:"Capixaba, AC, 69922-000", maps:"https://maps.app.goo.gl/T5aC4EG1VsuKBsDz5"},
+      {name:"Cidade do Povo", address:"Cidade do Povo, Rio Branco - AC, 69925-000", maps:"https://maps.app.goo.gl/c7ycJ1PGT3MFTDkn6"},
+      {name:"Data Center", address:"R. Bertioga, 131-61 - Vila Ivonete, Rio Branco - AC, 69914-570", maps:"https://maps.app.goo.gl/9oS3kq45e6Han7hH8"},
+      {name:"Esperança", address:"R. São José, 376 - Nova Esperança, Rio Branco - AC, 69915-202", maps:"https://maps.app.goo.gl/C4Veu4rWL7yH1mfy7"},
+      {name:"Feijó", address:"BR-364, 122, Feijó - AC, 69960-000", maps:"https://maps.app.goo.gl/3SSLGh2rvsDBFVn29"},
+      {name:"Liberdade", address:"BR-364, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/HjJkKVHR1Bcr1U2o7"},
+      {name:"Mâncio Lima", address:"R João B Rodrigues, 428 - Centro, Mâncio Lima - AC, 69900-970", maps:"https://maps.app.goo.gl/fG5f81v4jcBbiXcPA"},
+      {name:"Manoel Urbano", address:"Manoel Urbano, Acre", maps:"https://maps.app.goo.gl/7wEyk5Gj9RYn7aNw7"},
+      {name:"Maison Borges", address:"Distrito Industrial, Rio Branco - AC", maps:"https://maps.app.goo.gl/tMVds5Jq6mwRnEUF7"},
+      {name:"Part e Alta", address:"R. João Francisco da Cunha, 39 - Conj Procom, Rio Branco - AC, 69918-632", maps:"https://maps.app.goo.gl/25wwXie6vogyE8az8"},
+      {name:"Plácido de Castro", address:"R. Diamantino A De Macedo, 1112 - Plácido De Castro, Plácido de Castro - AC, 69928-000", maps:"https://maps.app.goo.gl/xGRWkw3g1c5X9JPd6"},
+      {name:"Porto Acre", address:"Porto Acre, Acre, 69921-000", maps:"https://maps.app.goo.gl/CYFdELdKAQ1XAGkP8"},
+      {name:"Rodrigues Alves", address:"Av. Projeto Rondon, 2-18, Rodrigues Alves - AC, 69985-000", maps:"https://maps.app.goo.gl/c9991Hv3q6eX1UdR8"},
+      {name:"Sobral", address:"R. Principal, 179-1 - Palheiral, Rio Branco - AC, 69903-830", maps:"https://maps.app.goo.gl/HEW8efJ7mD5EoLx49"},
+      {name:"Sena Madureira ( Cidade )", address:"R. Walter Wilton Maia, 169 - Sena Madureira, AC, 69940-000", maps:"https://maps.app.goo.gl/ZpW4qPWwk426BwQJ8"},
+      {name:"Sena Madureira ( Estrada )", address:"Sena Madureira, Acre", maps:"https://maps.app.goo.gl/bDMJo91eqv7noue3A"},
+      {name:"Senador Guiomard (Quinari)", address:"Sen. Guiomard, AC", maps:"https://maps.app.goo.gl/cTPPaNfiA1y8qiqn9"},
+      {name:"Tancredo Neves", address:"Estrada Raimundo Irineu Serra - Novo Horizonte, Rio Branco - AC, 69918-505", maps:"https://maps.app.goo.gl/BB4sHicRV9fFmL7p9"},
+      {name:"Tarauacá", address:"R. Floriano Peixoto, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/uZp1eHpGair9AqUW7"},
+      {name:"Trevo Rodrigues Alves", address:"BR-364, Cruzeiro do Sul - AC, 69980-000", maps:"https://maps.app.goo.gl/csPQGbGUHtxnhSCNA"},
+      {name:"Vila Caquetá", address:"BR-317, 20191 - Vila Caquetá, Sen. Guiomard - AC, 69925-000", maps:"https://maps.app.goo.gl/5s3hwEwwJhU17H9G7"},
+      {name:"Xapuri ( Cidade )", address:"R. Nações Unidas, 1143 - Centro, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/FV8RExFPezVrZMA69"},
+      {name:"Xapuri (Posto)", address:"Auto Posto Entroncamento Petrobras, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/1z6WPwejPAZ6iq369"}
+    ];
+    
+    popsLocal.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+    popsLocal.forEach(p=>{
+      const opt = document.createElement('option');
+      opt.value = p.name;
+      opt.dataset.address = p.address;
+      opt.dataset.maps = p.maps;
+      opt.textContent = p.name;
+      sel.appendChild(opt);
+    });
+    
+    console.log(`✅ ${popsLocal.length} POPs carregados localmente (fallback)`);
+  }
 }
 
 /* ========== Limpar Campos do POP ========== */
@@ -982,18 +1083,39 @@ function clearSig(id){
   const c = document.getElementById(id);
   const ctx = c.getContext('2d');
   ctx.clearRect(0,0,c.width,c.height);
-  if(id==='sigTech') document.getElementById('sigTechPreview').innerHTML='';
   if(id==='sigResp') document.getElementById('sigRespPreview').innerHTML='';
-  if(id==='sigTechImg') document.getElementById('sigTechImg').value='';
   if(id==='sigRespImg') document.getElementById('sigRespImg').value='';
 }
 
-function saveSig(canvasId, hiddenInputId){
-  const c = document.getElementById(canvasId);
-  const data = c.toDataURL('image/png', 0.8); 
-  document.getElementById(hiddenInputId).value = data;
-  const previewId = (canvasId==='sigTech') ? 'sigTechPreview' : 'sigRespPreview';
-  document.getElementById(previewId).innerHTML = '<img src="'+data+'" style="max-width:220px; border:1px solid #ccc; border-radius:6px;" />';
+/* ========== ✅ NOVA FUNÇÃO: Carregar assinatura de arquivo ========== */
+function handleSignatureFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    // Verificar se é uma imagem
+    if (!file.type.match('image.*')) {
+        alert('Por favor, selecione apenas arquivos de imagem (JPG, PNG, etc.)');
+        return;
+    }
+    
+    const reader = new FileReader();
+    
+    reader.onload = function(ev) {
+        const dataUrl = ev.target.result;
+        document.getElementById('sigRespImg').value = dataUrl;
+        
+        // Mostrar preview da assinatura
+        const previewId = 'sigRespPreview';
+        document.getElementById(previewId).innerHTML = '<img src="'+dataUrl+'" style="max-width:220px; border:1px solid #ccc; border-radius:6px;" />';
+        
+        // Limpar o canvas de assinatura manual
+        const canvas = document.getElementById('sigResp');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
+    
+    reader.readAsDataURL(file);
+    input.value = ''; // Limpar o input para permitir selecionar o mesmo arquivo novamente
 }
 
 /* ========== Salvar rascunho local (localStorage) ========== */
@@ -1009,9 +1131,33 @@ function gatherFormData(){
   data.endereco = document.getElementById('endereco').value;
   data.localizacao = document.getElementById('localizacao').value;
   data.dataEstimada = document.getElementById('dataEstimada').value;
+  data.nomeResponsavel = document.getElementById('nomeResponsavel').value; // ✅ NOVO: Nome do responsável
 
-  data.sigTech = document.getElementById('sigTechImg').value || null;
-  data.sigResp = document.getElementById('sigRespImg').value || null;
+  // ✅ ALTERADO: Verificar se há assinatura no canvas ou arquivo
+  const sigCanvas = document.getElementById('sigResp');
+  const sigFile = document.getElementById('sigRespImg').value;
+  
+  if (sigFile) {
+    data.sigResp = sigFile;
+  } else {
+    // Se não há arquivo, usar a assinatura do canvas se existir
+    const ctx = sigCanvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height);
+    let hasDrawing = false;
+    
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        if (imageData.data[i + 3] !== 0) { // Verificar se há pixels não transparentes
+            hasDrawing = true;
+            break;
+        }
+    }
+    
+    if (hasDrawing) {
+        data.sigResp = sigCanvas.toDataURL('image/png', 0.8);
+    } else {
+        data.sigResp = null;
+    }
+  }
 
   data.images = JSON.parse(JSON.stringify(formImages));
 
@@ -1023,6 +1169,83 @@ function gatherFormData(){
     data[n] = fd.getAll(n).join(', ') || fd.get(n) || '';
   });
   return data;
+}
+
+/* ========== ✅ SALVAR OS NO SUPABASE ========== */
+async function salvarNoSupabase(formData) {
+    try {
+        console.log('Iniciando salvamento no Supabase...');
+        
+        const session = await checkAuth();
+        if (!session) {
+            // Se não estiver autenticado, salvar localmente
+            console.log('⚠️ Usuário não autenticado - salvando localmente');
+            return null;
+        }
+
+        // Preparar dados para o Supabase
+        const osData = {
+            numero_os: formData.numeroOS,
+            data_hora: formData.dataHora,
+            hora_inicio: formData.horaInicio,
+            hora_termino: formData.horaTermino,
+            pop_selecionado: formData.pop,
+            endereco: formData.endereco,
+            localizacao_maps: formData.localizacao,
+            data_estimada: formData.dataEstimada,
+            nome_responsavel: formData.nomeResponsavel,
+            assinatura_responsavel: formData.sigResp,
+            
+            // Seção 1: Infraestrutura
+            limpeza_rack_status: formData.limpeza_rack_status,
+            limpeza_rack_obs: formData.limpeza_rack_obs,
+            cabos_status: formData.cabos_status,
+            cabos_obs: formData.cabos_obs,
+            temp_status: formData.temp_status,
+            temp_obs: formData.temp_obs,
+            vent_status: formData.vent_status,
+            vent_obs: formData.vent_obs,
+            porta_status: formData.porta_status,
+            porta_obs: formData.porta_obs,
+            id_equip_status: formData.id_equip_status,
+            id_equip_obs: formData.id_equip_obs,
+            
+            // Seção 2: Equipamentos
+            olt_status: formData.olt_status,
+            olt_obs: formData.olt_obs,
+            sw_status: formData.sw_status,
+            sw_obs: formData.sw_obs,
+            ret_status: formData.ret_status,
+            ret_obs: formData.ret_obs,
+            
+            // Seção 3: Ações e Observações
+            acoes_realizadas: formData.acoes_realizadas,
+            observacoes_recomendacoes: formData.observacoes_recomendacoes,
+            
+            // Imagens
+            imagens: formData.images,
+            
+            // Metadados
+            created_by: session.user.id
+        };
+
+        console.log('Enviando dados para o Supabase...', osData);
+
+        const { data, error } = await supabase
+            .from('ordens_servico')
+            .insert([osData])
+            .select();
+
+        if (error) throw error;
+
+        console.log('✅ OS salva no Supabase:', data);
+        return data[0].id; // Retorna o ID da OS salva
+
+    } catch (error) {
+        console.error('❌ Erro ao salvar no Supabase:', error);
+        // Não lançar erro para não impedir a geração do PDF
+        return null;
+    }
 }
 
 /* ========== Apagar Imagem Individual ========== */
@@ -1042,10 +1265,23 @@ async function generateAndPrint() {
     if (!validarFormularioManutencao()) return;
     
     try {
-        // Mostrar loading
         const btn = document.querySelector('button[onclick="generateAndPrint()"]');
         const originalText = btn.textContent;
+        
+        // ✅ PRIMEIRO: Salvar no Supabase
         btn.disabled = true;
+        btn.textContent = 'Salvando no banco...';
+        
+        const formData = gatherFormData();
+        const osId = await salvarNoSupabase(formData);
+        
+        if (osId) {
+            console.log('✅ OS salva no banco com ID:', osId);
+        } else {
+            console.log('⚠️ OS não salva no banco (usuário não autenticado ou erro)');
+        }
+        
+        // ✅ DEPOIS: Gerar PDF
         btn.textContent = 'Gerando PDF...';
 
         const { jsPDF } = window.jspdf;
@@ -1077,8 +1313,6 @@ async function generateAndPrint() {
         // Informações Gerais
         pdf.setFontSize(11);
         pdf.setFont(undefined, 'normal');
-        
-        const formData = gatherFormData();
         
         // ✅ MELHORIA: Formatar data dd/mm/aaaa
         const dataFormatada = formData.dataHora ? 
@@ -1320,7 +1554,7 @@ async function generateAndPrint() {
             y += 10;
         }
 
-        // ✅ MELHORIA: Assinaturas melhor posicionadas
+        // ✅ MELHORIA: Assinaturas - Agora apenas uma assinatura centralizada
         if (y > 150) {
             pdf.addPage();
             y = 30;
@@ -1333,33 +1567,27 @@ async function generateAndPrint() {
         pdf.text('ASSINATURAS', pageWidth / 2, y, { align: 'center' });
         y += 20;
 
-        // Assinatura Técnico
-        if (formData.sigTech) {
-            try {
-                const sigTechProps = pdf.getImageProperties(formData.sigTech);
-                const sigW = 60;
-                const sigH = (sigTechProps.height * sigW) / sigTechProps.width;
-                const sigX = (pageWidth / 2) - sigW - 10;
-                pdf.addImage(formData.sigTech, 'PNG', sigX, y, sigW, sigH);
-                pdf.line(sigX, y + sigH + 2, sigX + sigW, y + sigH + 2);
-                pdf.setFontSize(10);
-                pdf.text('Assinatura do Técnico', sigX + (sigW / 2), y + sigH + 8, { align: 'center' });
-            } catch(e) {
-                console.warn('Erro ao adicionar assinatura técnica:', e);
-            }
+        // ✅ NOVO: Nome do responsável
+        if (formData.nomeResponsavel) {
+            pdf.setFontSize(11);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Responsável pela Manutenção:', pageWidth / 2, y, { align: 'center' });
+            pdf.setFont(undefined, 'normal');
+            pdf.text(formData.nomeResponsavel, pageWidth / 2, y + 6, { align: 'center' });
+            y += 15;
         }
 
-        // Assinatura Responsável
+        // Assinatura Responsável (Técnico/Encarregado) - Centralizada
         if (formData.sigResp) {
             try {
                 const sigRespProps = pdf.getImageProperties(formData.sigResp);
-                const sigW = 60;
+                const sigW = 80; // ✅ Aumentada para melhor visualização
                 const sigH = (sigRespProps.height * sigW) / sigRespProps.width;
-                const sigX = (pageWidth / 2) + 10;
+                const sigX = (pageWidth / 2) - (sigW / 2); // ✅ Centralizada
                 pdf.addImage(formData.sigResp, 'PNG', sigX, y, sigW, sigH);
                 pdf.line(sigX, y + sigH + 2, sigX + sigW, y + sigH + 2);
                 pdf.setFontSize(10);
-                pdf.text('Assinatura do Responsável', sigX + (sigW / 2), y + sigH + 8, { align: 'center' });
+                pdf.text('Assinatura do Responsável (Técnico/Encarregado)', pageWidth / 2, y + sigH + 8, { align: 'center' });
             } catch(e) {
                 console.warn('Erro ao adicionar assinatura responsável:', e);
             }
@@ -1373,7 +1601,11 @@ async function generateAndPrint() {
         btn.disabled = false;
         btn.textContent = originalText;
         
-        alert('✅ PDF gerado com sucesso!\n\nArquivo: ' + fileName);
+        if (osId) {
+            alert('✅ PDF gerado com sucesso!\n✅ OS salva no banco de dados!\n\nArquivo: ' + fileName);
+        } else {
+            alert('✅ PDF gerado com sucesso!\n⚠️ OS salva apenas localmente\n\nArquivo: ' + fileName);
+        }
 
     } catch (error) {
         console.error("Erro ao gerar PDF:", error);
@@ -1398,6 +1630,9 @@ function validarFormularioManutencao() {
     const endereco = document.getElementById('endereco').value.trim();
     if (!endereco) faltando.push("Endereço");
 
+    const nomeResponsavel = document.getElementById('nomeResponsavel').value.trim(); // ✅ NOVO: Validar nome
+    if (!nomeResponsavel) faltando.push("Nome do Responsável pela Manutenção");
+
     // Verificar se há pelo menos uma verificação preenchida
     const temVerificacao = document.querySelectorAll('select[name$="_status"]:not([value=""])').length > 0;
     if (!temVerificacao) faltando.push("Pelo menos uma verificação preenchida");
@@ -1419,6 +1654,24 @@ function validarFormularioManutencao() {
         faltando.push("Pelo menos um campo da seção 'Ações Corretivas e Observações'");
     }
 
+    // ✅ NOVO: Validar se há assinatura (canvas ou arquivo)
+    const sigCanvas = document.getElementById('sigResp');
+    const sigFile = document.getElementById('sigRespImg').value;
+    const ctx = sigCanvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, sigCanvas.width, sigCanvas.height);
+    let hasDrawing = false;
+    
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        if (imageData.data[i + 3] !== 0) {
+            hasDrawing = true;
+            break;
+        }
+    }
+    
+    if (!hasDrawing && !sigFile) {
+        faltando.push("Assinatura do Responsável (desenhe no campo ou insira um arquivo)");
+    }
+
     if (faltando.length > 0) {
         alert("⚠️ Antes de gerar o PDF, preencha os seguintes campos:\n\n• " + faltando.join("\n• "));
         
@@ -1431,6 +1684,12 @@ function validarFormularioManutencao() {
                     campo.style.border = '2px solid #dc3545';
                     campo.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
+            } else if (item.includes('Nome do Responsável')) {
+                document.getElementById('nomeResponsavel').style.border = '2px solid #dc3545';
+                document.getElementById('nomeResponsavel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else if (item.includes('Assinatura')) {
+                document.getElementById('sigResp').style.border = '2px solid #dc3545';
+                document.getElementById('sigResp').scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         });
         
@@ -1490,8 +1749,10 @@ function limparFormulario() {
     }
     
     // Limpar assinaturas
-    clearSig('sigTech');
     clearSig('sigResp');
+    
+    // Limpar nome do responsável
+    document.getElementById('nomeResponsavel').value = '';
     
     // Limpar campos de texto específicos (caso não sejam resetados pelo form.reset())
     const textareas = document.querySelectorAll('textarea');
@@ -1536,8 +1797,12 @@ window.addEventListener('load', function(){
   const link = document.getElementById('mapsLink');
   if(link.href === '#' || !document.getElementById('localizacao').value) link.style.opacity=0.5;
 
-  initSignatureCanvas('sigTech');
   initSignatureCanvas('sigResp');
+  
+  // ✅ NOVO: Event listener para o input de arquivo de assinatura
+  document.getElementById('fileSigInput').addEventListener('change', function(e) {
+    handleSignatureFile(e.target);
+  });
 });
 </script>
 </body>
