@@ -4,8 +4,8 @@
   "description": "Sistema para controle de manutenções preventivas e corretivas",
   "start_url": "/manuten-o_POP_SF/",
   "display": "standalone",
-  "background_color": "#0d6efd",
-  "theme_color": "#0d6efd",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
   "orientation": "portrait-primary",
   "scope": "/manuten-o_POP_SF/",
   "lang": "pt-BR",
@@ -35,3 +35,4 @@
     }
   ]
 }
+
