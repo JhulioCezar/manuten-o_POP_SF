@@ -626,6 +626,9 @@
 
       <!-- ações -->
       <div class="footer-actions no-print" style="justify-content: center;">
+        <button type="button" class="btn secondary no-print" onclick="reiniciarContagemOS()" style="background: #dc3545;">
+          Reiniciar Contagem OS
+        </button>
         <button type="button" class="btn secondary" onclick="limparFormulario()">Limpar Formulário</button>
         <button type="button" class="btn" onclick="generateAndPrint()">Gerar e Baixar PDF</button>
       </div>
@@ -649,58 +652,117 @@ if ('serviceWorker' in navigator) {
 // ✅ NOVO: Variável para controle do modal de imagem
 let currentPreviewId = '';
 
-/* ========== ✅ CONFIGURAÇÃO SUPABASE ========== */
-// ⚠️ SUBSTITUA pelas suas credenciais do Supabase
+/* ========== ✅ CONFIGURAÇÃO SUPABASE CORRIGIDA ========== */
 const SUPABASE_URL = 'https://nxptofoqzqlanwfklysd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cHRvZm9xenFsYW53ZmtseXNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxMjY5MzAsImV4cCI6MjA3ODcwMjkzMH0.XzaOvHdhlIZHRAYyiBqxx_VO1rAbsQF3F42nHhkTG0U';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ✅ CORREÇÃO: Inicializar o Supabase APÓS o carregamento completo
+let supabase;
 
-// ✅ VERIFICAR SE USUÁRIO ESTÁ LOGADO
-async function checkAuth() {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) {
-        console.error('Erro ao verificar sessão:', error);
-        return null;
+function inicializarSupabase() {
+    if (typeof window.supabase !== 'undefined') {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase inicializado com sucesso!');
+        return true;
+    } else {
+        console.error('❌ Supabase não carregado. Verificando novamente...');
+        return false;
     }
-    return session;
 }
 
-/* ========== Dados dos POPs (ordenados alfabeticamente) ========== */
-const pops = [
-  {name:"4 Bocas", address:"Br 364 km 25 sentido - Porto Velho, Rio Branco - AC, 69900-000", maps:"https://maps.app.goo.gl/iRFgi4HiX6qroz1X8"},
-  {name:"Acrelândia", address:"Acrelândia, Acre", maps:"https://maps.app.goo.gl/uAzxTA8C54GQtmTE8"},
-  {name:"Albert Sampaio", address:"Rodovia BR-364 Albert Sampaio, Rio Branco - AC, 69909-040", maps:"https://maps.app.goo.gl/1kQs6jH4PpJN8mKf8"},
-  {name:"Assis Brasil", address:"Ipiranga, Assis Brasil - AC, 69935-000", maps:"https://maps.app.goo.gl/zafXZppgL2Yae3Bu5"},
-  {name:"Belo Jardim", address:"Tv. Isaías, 208 - Belo Jardim I, Rio Branco - AC, 69907-848", maps:"https://maps.app.goo.gl/FnPmXhj7hSdbp6sA6"},
-  {name:"Benfica", address:"Benfica, Rio Branco, Acre", maps:"https://maps.app.goo.gl/6BLpDpxT9QFggr5eA"},
-  {name:"Bom Jesus", address:"Vila Acre, Rio Branco - AC", maps:"https://maps.app.goo.gl/7ARa5NroqG1rEUMq7"},
-  {name:"Bujari", address:"Bujari, AC, 69923-000", maps:"https://maps.app.goo.gl/gYnGmjFqhXHHL52aA"},
-  {name:"Calafate", address:"R. Abunã, 81 - Portal da Amazônia, Rio Branco - AC, 69915-840", maps:"https://maps.app.goo.gl/XeTCvk7LhbRCwkpNA"},
-  {name:"Capixaba", address:"Capixaba, AC, 69922-000", maps:"https://maps.app.goo.gl/T5aC4EG1VsuKBsDz5"},
-  {name:"Cidade do Povo", address:"Cidade do Povo, Rio Branco - AC, 69925-000", maps:"https://maps.app.goo.gl/c7ycJ1PGT3MFTDkn6"},
-  {name:"Data Center", address:"R. Bertioga, 131-61 - Vila Ivonete, Rio Branco - AC, 69914-570", maps:"https://maps.app.goo.gl/9oS3kq45e6Han7hH8"},
-  {name:"Esperança", address:"R. São José, 376 - Nova Esperança, Rio Branco - AC, 69915-202", maps:"https://maps.app.goo.gl/C4Veu4rWL7yH1mfy7"},
-  {name:"Feijó", address:"BR-364, 122, Feijó - AC, 69960-000", maps:"https://maps.app.goo.gl/3SSLGh2rvsDBFVn29"},
-  {name:"Liberdade", address:"BR-364, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/HjJkKVHR1Bcr1U2o7"},
-  {name:"Mâncio Lima", address:"R João B Rodrigues, 428 - Centro, Mâncio Lima - AC, 69900-970", maps:"https://maps.app.goo.gl/fG5f81v4jcBbiXcPA"},
-  {name:"Manoel Urbano", address:"Manoel Urbano, Acre", maps:"https://maps.app.goo.gl/7wEyk5Gj9RYn7aNw7"},
-  {name:"Maison Borges", address:"Distrito Industrial, Rio Branco - AC", maps:"https://maps.app.goo.gl/tMVds5Jq6mwRnEUF7"},
-  {name:"Part e Alta", address:"R. João Francisco da Cunha, 39 - Conj Procom, Rio Branco - AC, 69918-632", maps:"https://maps.app.goo.gl/25wwXie6vogyE8az8"},
-  {name:"Plácido de Castro", address:"R. Diamantino A De Macedo, 1112 - Plácido De Castro, Plácido de Castro - AC, 69928-000", maps:"https://maps.app.goo.gl/xGRWkw3g1c5X9JPd6"},
-  {name:"Porto Acre", address:"Porto Acre, Acre, 69921-000", maps:"https://maps.app.goo.gl/CYFdELdKAQ1XAGkP8"},
-  {name:"Rodrigues Alves", address:"Av. Projeto Rondon, 2-18, Rodrigues Alves - AC, 69985-000", maps:"https://maps.app.goo.gl/c9991Hv3q6eX1UdR8"},
-  {name:"Sobral", address:"R. Principal, 179-1 - Palheiral, Rio Branco - AC, 69903-830", maps:"https://maps.app.goo.gl/HEW8efJ7mD5EoLx49"},
-  {name:"Sena Madureira ( Cidade )", address:"R. Walter Wilton Maia, 169 - Sena Madureira, AC, 69940-000", maps:"https://maps.app.goo.gl/ZpW4qPWwk426BwQJ8"},
-  {name:"Sena Madureira ( Estrada )", address:"Sena Madureira, Acre", maps:"https://maps.app.goo.gl/bDMJo91eqv7noue3A"},
-  {name:"Senador Guiomard (Quinari)", address:"Sen. Guiomard, AC", maps:"https://maps.app.goo.gl/cTPPaNfiA1y8qiqn9"},
-  {name:"Tancredo Neves", address:"Estrada Raimundo Irineu Serra - Novo Horizonte, Rio Branco - AC, 69918-505", maps:"https://maps.app.goo.gl/BB4sHicRV9fFmL7p9"},
-  {name:"Tarauacá", address:"R. Floriano Peixoto, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/uZp1eHpGair9AqUW7"},
-  {name:"Trevo Rodrigues Alves", address:"BR-364, Cruzeiro do Sul - AC, 69980-000", maps:"https://maps.app.goo.gl/csPQGbGUHtxnhSCNA"},
-  {name:"Vila Caquetá", address:"BR-317, 20191 - Vila Caquetá, Sen. Guiomard - AC, 69925-000", maps:"https://maps.app.goo.gl/5s3hwEwwJhU17H9G7"},
-  {name:"Xapuri ( Cidade )", address:"R. Nações Unidas, 1143 - Centro, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/FV8RExFPezVrZMA69"},
-  {name:"Xapuri (Posto)", address:"Auto Posto Entroncamento Petrobras, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/1z6WPwejPAZ6iq369"},
-];
+// ✅ NOVA FUNÇÃO: Carregar POPs locais como fallback
+function carregarPOPsLocais() {
+    const sel = document.getElementById('popSelect');
+    sel.innerHTML = '<option value="">-- Selecione o POP --</option>';
+    
+    const popsLocal = [
+        {name:"4 Bocas", address:"Br 364 km 25 sentido - Porto Velho, Rio Branco - AC, 69900-000", maps:"https://maps.app.goo.gl/iRFgi4HiX6qroz1X8"},
+        {name:"Acrelândia", address:"Acrelândia, Acre", maps:"https://maps.app.goo.gl/uAzxTA8C54GQtmTE8"},
+        {name:"Albert Sampaio", address:"Rodovia BR-364 Albert Sampaio, Rio Branco - AC, 69909-040", maps:"https://maps.app.goo.gl/1kQs6jH4PpJN8mKf8"},
+        {name:"Assis Brasil", address:"Ipiranga, Assis Brasil - AC, 69935-000", maps:"https://maps.app.goo.gl/zafXZppgL2Yae3Bu5"},
+        {name:"Belo Jardim", address:"Tv. Isaías, 208 - Belo Jardim I, Rio Branco - AC, 69907-848", maps:"https://maps.app.goo.gl/FnPmXhj7hSdbp6sA6"},
+        {name:"Benfica", address:"Benfica, Rio Branco, Acre", maps:"https://maps.app.goo.gl/6BLpDpxT9QFggr5eA"},
+        {name:"Bom Jesus", address:"Vila Acre, Rio Branco - AC", maps:"https://maps.app.goo.gl/7ARa5NroqG1rEUMq7"},
+        {name:"Bujari", address:"Bujari, AC, 69923-000", maps:"https://maps.app.goo.gl/gYnGmjFqhXHHL52aA"},
+        {name:"Calafate", address:"R. Abunã, 81 - Portal da Amazônia, Rio Branco - AC, 69915-840", maps:"https://maps.app.goo.gl/XeTCvk7LhbRCwkpNA"},
+        {name:"Capixaba", address:"Capixaba, AC, 69922-000", maps:"https://maps.app.goo.gl/T5aC4EG1VsuKBsDz5"},
+        {name:"Cidade do Povo", address:"Cidade do Povo, Rio Branco - AC, 69925-000", maps:"https://maps.app.goo.gl/c7ycJ1PGT3MFTDkn6"},
+        {name:"Data Center", address:"R. Bertioga, 131-61 - Vila Ivonete, Rio Branco - AC, 69914-570", maps:"https://maps.app.goo.gl/9oS3kq45e6Han7hH8"},
+        {name:"Esperança", address:"R. São José, 376 - Nova Esperança, Rio Branco - AC, 69915-202", maps:"https://maps.app.goo.gl/C4Veu4rWL7yH1mfy7"},
+        {name:"Feijó", address:"BR-364, 122, Feijó - AC, 69960-000", maps:"https://maps.app.goo.gl/3SSLGh2rvsDBFVn29"},
+        {name:"Liberdade", address:"BR-364, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/HjJkKVHR1Bcr1U2o7"},
+        {name:"Mâncio Lima", address:"R João B Rodrigues, 428 - Centro, Mâncio Lima - AC, 69900-970", maps:"https://maps.app.goo.gl/fG5f81v4jcBbiXcPA"},
+        {name:"Manoel Urbano", address:"Manoel Urbano, Acre", maps:"https://maps.app.goo.gl/7wEyk5Gj9RYn7aNw7"},
+        {name:"Maison Borges", address:"Distrito Industrial, Rio Branco - AC", maps:"https://maps.app.goo.gl/tMVds5Jq6mwRnEUF7"},
+        {name:"Part e Alta", address:"R. João Francisco da Cunha, 39 - Conj Procom, Rio Branco - AC, 69918-632", maps:"https://maps.app.goo.gl/25wwXie6vogyE8az8"},
+        {name:"Plácido de Castro", address:"R. Diamantino A De Macedo, 1112 - Plácido De Castro, Plácido de Castro - AC, 69928-000", maps:"https://maps.app.goo.gl/xGRWkw3g1c5X9JPd6"},
+        {name:"Porto Acre", address:"Porto Acre, Acre, 69921-000", maps:"https://maps.app.goo.gl/CYFdELdKAQ1XAGkP8"},
+        {name:"Rodrigues Alves", address:"Av. Projeto Rondon, 2-18, Rodrigues Alves - AC, 69985-000", maps:"https://maps.app.goo.gl/c9991Hv3q6eX1UdR8"},
+        {name:"Sobral", address:"R. Principal, 179-1 - Palheiral, Rio Branco - AC, 69903-830", maps:"https://maps.app.goo.gl/HEW8efJ7mD5EoLx49"},
+        {name:"Sena Madureira ( Cidade )", address:"R. Walter Wilton Maia, 169 - Sena Madureira, AC, 69940-000", maps:"https://maps.app.goo.gl/ZpW4qPWwk426BwQJ8"},
+        {name:"Sena Madureira ( Estrada )", address:"Sena Madureira, Acre", maps:"https://maps.app.goo.gl/bDMJo91eqv7noue3A"},
+        {name:"Senador Guiomard (Quinari)", address:"Sen. Guiomard, AC", maps:"https://maps.app.goo.gl/cTPPaNfiA1y8qiqn9"},
+        {name:"Tancredo Neves", address:"Estrada Raimundo Irineu Serra - Novo Horizonte, Rio Branco - AC, 69918-505", maps:"https://maps.app.goo.gl/BB4sHicRV9fFmL7p9"},
+        {name:"Tarauacá", address:"R. Floriano Peixoto, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/uZp1eHpGair9AqUW7"},
+        {name:"Trevo Rodrigues Alves", address:"BR-364, Cruzeiro do Sul - AC, 69980-000", maps:"https://maps.app.goo.gl/csPQGbGUHtxnhSCNA"},
+        {name:"Vila Caquetá", address:"BR-317, 20191 - Vila Caquetá, Sen. Guiomard - AC, 69925-000", maps:"https://maps.app.goo.gl/5s3hwEwwJhU17H9G7"},
+        {name:"Xapuri ( Cidade )", address:"R. Nações Unidas, 1143 - Centro, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/FV8RExFPezVrZMA69"},
+        {name:"Xapuri (Posto)", address:"Auto Posto Entroncamento Petrobras, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/1z6WPwejPAZ6iq369"}
+    ];
+    
+    popsLocal.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+    popsLocal.forEach(p=>{
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.dataset.address = p.address;
+        opt.dataset.maps = p.maps;
+        opt.textContent = p.name;
+        sel.appendChild(opt);
+    });
+    
+    console.log(`✅ ${popsLocal.length} POPs carregados localmente (fallback)`);
+}
+
+/* ========== ✅ CARREGAR POPs DO SUPABASE CORRIGIDO ========== */
+async function populatePOP(){
+  // ✅ CORREÇÃO: Verificar se o Supabase está inicializado
+  if (!supabase) {
+    if (!inicializarSupabase()) {
+      console.log('⚠️ Supabase não disponível. Usando POPs locais...');
+      carregarPOPsLocais();
+      return;
+    }
+  }
+  
+  try {
+    console.log('Carregando POPs do Supabase...');
+    
+    const { data: pops, error } = await supabase
+      .from('pops')
+      .select('*')
+      .order('nome');
+    
+    if (error) throw error;
+    
+    const sel = document.getElementById('popSelect');
+    sel.innerHTML = '<option value="">-- Selecione o POP --</option>';
+    
+    pops.forEach(pop => {
+      const opt = document.createElement('option');
+      opt.value = pop.nome;
+      opt.dataset.address = pop.endereco;
+      opt.dataset.maps = pop.maps_url;
+      opt.textContent = pop.nome;
+      sel.appendChild(opt);
+    });
+    
+    console.log(`✅ ${pops.length} POPs carregados do Supabase`);
+    
+  } catch (error) {
+    console.error('❌ Erro ao carregar POPs do Supabase:', error);
+    carregarPOPsLocais();
+  }
+}
 
 /* ========== ✅ NOVAS FUNÇÕES: Modal de imagem ========== */
 function openImageModal(previewId) {
@@ -762,88 +824,6 @@ function formatarNomeProprio(campo) {
     campo.value = palavrasFormatadas.join(' ');
 }
 
-/* ========== ✅ CARREGAR POPs DO SUPABASE ========== */
-async function populatePOP(){
-  try {
-    console.log('Carregando POPs do Supabase...');
-    
-    const { data: pops, error } = await supabase
-      .from('pops')
-      .select('*')
-      .order('nome');
-    
-    if (error) throw error;
-    
-    const sel = document.getElementById('popSelect');
-    sel.innerHTML = '<option value="">-- Selecione o POP --</option>';
-    
-    pops.forEach(pop => {
-      const opt = document.createElement('option');
-      opt.value = pop.nome;
-      opt.dataset.address = pop.endereco;
-      opt.dataset.maps = pop.maps_url;
-      opt.textContent = pop.nome;
-      sel.appendChild(opt);
-    });
-    
-    console.log(`✅ ${pops.length} POPs carregados do Supabase`);
-    
-  } catch (error) {
-    console.error('❌ Erro ao carregar POPs do Supabase:', error);
-    
-    // ✅ FALLBACK: Usar POPs locais em caso de erro
-    const sel = document.getElementById('popSelect');
-    sel.innerHTML = '<option value="">-- Selecione o POP --</option>';
-    
-    const popsLocal = [
-      {name:"4 Bocas", address:"Br 364 km 25 sentido - Porto Velho, Rio Branco - AC, 69900-000", maps:"https://maps.app.goo.gl/iRFgi4HiX6qroz1X8"},
-      {name:"Acrelândia", address:"Acrelândia, Acre", maps:"https://maps.app.goo.gl/uAzxTA8C54GQtmTE8"},
-      {name:"Albert Sampaio", address:"Rodovia BR-364 Albert Sampaio, Rio Branco - AC, 69909-040", maps:"https://maps.app.goo.gl/1kQs6jH4PpJN8mKf8"},
-      {name:"Assis Brasil", address:"Ipiranga, Assis Brasil - AC, 69935-000", maps:"https://maps.app.goo.gl/zafXZppgL2Yae3Bu5"},
-      {name:"Belo Jardim", address:"Tv. Isaías, 208 - Belo Jardim I, Rio Branco - AC, 69907-848", maps:"https://maps.app.goo.gl/FnPmXhj7hSdbp6sA6"},
-      {name:"Benfica", address:"Benfica, Rio Branco, Acre", maps:"https://maps.app.goo.gl/6BLpDpxT9QFggr5eA"},
-      {name:"Bom Jesus", address:"Vila Acre, Rio Branco - AC", maps:"https://maps.app.goo.gl/7ARa5NroqG1rEUMq7"},
-      {name:"Bujari", address:"Bujari, AC, 69923-000", maps:"https://maps.app.goo.gl/gYnGmjFqhXHHL52aA"},
-      {name:"Calafate", address:"R. Abunã, 81 - Portal da Amazônia, Rio Branco - AC, 69915-840", maps:"https://maps.app.goo.gl/XeTCvk7LhbRCwkpNA"},
-      {name:"Capixaba", address:"Capixaba, AC, 69922-000", maps:"https://maps.app.goo.gl/T5aC4EG1VsuKBsDz5"},
-      {name:"Cidade do Povo", address:"Cidade do Povo, Rio Branco - AC, 69925-000", maps:"https://maps.app.goo.gl/c7ycJ1PGT3MFTDkn6"},
-      {name:"Data Center", address:"R. Bertioga, 131-61 - Vila Ivonete, Rio Branco - AC, 69914-570", maps:"https://maps.app.goo.gl/9oS3kq45e6Han7hH8"},
-      {name:"Esperança", address:"R. São José, 376 - Nova Esperança, Rio Branco - AC, 69915-202", maps:"https://maps.app.goo.gl/C4Veu4rWL7yH1mfy7"},
-      {name:"Feijó", address:"BR-364, 122, Feijó - AC, 69960-000", maps:"https://maps.app.goo.gl/3SSLGh2rvsDBFVn29"},
-      {name:"Liberdade", address:"BR-364, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/HjJkKVHR1Bcr1U2o7"},
-      {name:"Mâncio Lima", address:"R João B Rodrigues, 428 - Centro, Mâncio Lima - AC, 69900-970", maps:"https://maps.app.goo.gl/fG5f81v4jcBbiXcPA"},
-      {name:"Manoel Urbano", address:"Manoel Urbano, Acre", maps:"https://maps.app.goo.gl/7wEyk5Gj9RYn7aNw7"},
-      {name:"Maison Borges", address:"Distrito Industrial, Rio Branco - AC", maps:"https://maps.app.goo.gl/tMVds5Jq6mwRnEUF7"},
-      {name:"Part e Alta", address:"R. João Francisco da Cunha, 39 - Conj Procom, Rio Branco - AC, 69918-632", maps:"https://maps.app.goo.gl/25wwXie6vogyE8az8"},
-      {name:"Plácido de Castro", address:"R. Diamantino A De Macedo, 1112 - Plácido De Castro, Plácido de Castro - AC, 69928-000", maps:"https://maps.app.goo.gl/xGRWkw3g1c5X9JPd6"},
-      {name:"Porto Acre", address:"Porto Acre, Acre, 69921-000", maps:"https://maps.app.goo.gl/CYFdELdKAQ1XAGkP8"},
-      {name:"Rodrigues Alves", address:"Av. Projeto Rondon, 2-18, Rodrigues Alves - AC, 69985-000", maps:"https://maps.app.goo.gl/c9991Hv3q6eX1UdR8"},
-      {name:"Sobral", address:"R. Principal, 179-1 - Palheiral, Rio Branco - AC, 69903-830", maps:"https://maps.app.goo.gl/HEW8efJ7mD5EoLx49"},
-      {name:"Sena Madureira ( Cidade )", address:"R. Walter Wilton Maia, 169 - Sena Madureira, AC, 69940-000", maps:"https://maps.app.goo.gl/ZpW4qPWwk426BwQJ8"},
-      {name:"Sena Madureira ( Estrada )", address:"Sena Madureira, Acre", maps:"https://maps.app.goo.gl/bDMJo91eqv7noue3A"},
-      {name:"Senador Guiomard (Quinari)", address:"Sen. Guiomard, AC", maps:"https://maps.app.goo.gl/cTPPaNfiA1y8qiqn9"},
-      {name:"Tancredo Neves", address:"Estrada Raimundo Irineu Serra - Novo Horizonte, Rio Branco - AC, 69918-505", maps:"https://maps.app.goo.gl/BB4sHicRV9fFmL7p9"},
-      {name:"Tarauacá", address:"R. Floriano Peixoto, Tarauacá - AC, 69970-000", maps:"https://maps.app.goo.gl/uZp1eHpGair9AqUW7"},
-      {name:"Trevo Rodrigues Alves", address:"BR-364, Cruzeiro do Sul - AC, 69980-000", maps:"https://maps.app.goo.gl/csPQGbGUHtxnhSCNA"},
-      {name:"Vila Caquetá", address:"BR-317, 20191 - Vila Caquetá, Sen. Guiomard - AC, 69925-000", maps:"https://maps.app.goo.gl/5s3hwEwwJhU17H9G7"},
-      {name:"Xapuri ( Cidade )", address:"R. Nações Unidas, 1143 - Centro, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/FV8RExFPezVrZMA69"},
-      {name:"Xapuri (Posto)", address:"Auto Posto Entroncamento Petrobras, Xapuri - AC, 69930-000", maps:"https://maps.app.goo.gl/1z6WPwejPAZ6iq369"}
-    ];
-    
-    popsLocal.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
-    popsLocal.forEach(p=>{
-      const opt = document.createElement('option');
-      opt.value = p.name;
-      opt.dataset.address = p.address;
-      opt.dataset.maps = p.maps;
-      opt.textContent = p.name;
-      sel.appendChild(opt);
-    });
-    
-    console.log(`✅ ${popsLocal.length} POPs carregados localmente (fallback)`);
-  }
-}
-
 /* ========== Limpar Campos do POP ========== */
 function clearPopFields() {
     document.getElementById('popSelect').value = "";
@@ -901,15 +881,36 @@ document.addEventListener('change', function(e){
   }
 });
 
-/* ========== Geração Nº OS automático por ano ========== */
+/* ========== ✅ ALTERADO: Geração Nº OS automático por ano (COMEÇA DO 1) ========== */
 function gerarNumeroOS(){
   const ano = new Date().getFullYear();
   const key = 'os_counter_' + ano;
-  let counter = parseInt(localStorage.getItem(key) || '0', 10);
-  counter = counter + 1;
+  
+  // ✅ CORREÇÃO: Se não existir contador, começa do 1
+  let counter = parseInt(localStorage.getItem(key), 10);
+  
+  if (isNaN(counter)) {
+    counter = 1; // ✅ PRIMEIRA OS do ano = 001/AAAA
+  } else {
+    counter = counter + 1;
+  }
+  
   localStorage.setItem(key, counter.toString());
   const numero = String(counter).padStart(3,'0') + '/' + ano;
   document.getElementById('numeroOS').value = numero;
+}
+
+/* ========== ✅ NOVA FUNÇÃO: Reiniciar contagem da OS ========== */
+function reiniciarContagemOS() {
+  if (!confirm('🚨 ATENÇÃO!\n\nIsso vai REINICIAR a contagem das OS para 001/ano atual.\n\nA próxima OS gerada será a primeira do ano.\n\nContinuar?')) {
+    return;
+  }
+  
+  const ano = new Date().getFullYear();
+  const key = 'os_counter_' + ano;
+  localStorage.removeItem(key);
+  gerarNumeroOS();
+  alert('✅ Contagem reiniciada!\n\nPróxima OS: ' + document.getElementById('numeroOS').value);
 }
 
 /* ========== Data/Hora e Horas preenchidas automaticamente ========== */
@@ -1171,11 +1172,31 @@ function gatherFormData(){
   return data;
 }
 
-/* ========== ✅ SALVAR OS NO SUPABASE ========== */
+/* ========== ✅ VERIFICAR SE USUÁRIO ESTÁ LOGADO ========== */
+async function checkAuth() {
+    if (!supabase) return null;
+    
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+        console.error('Erro ao verificar sessão:', error);
+        return null;
+    }
+    return session;
+}
+
+/* ========== ✅ SALVAR OS NO SUPABASE CORRIGIDO ========== */
 async function salvarNoSupabase(formData) {
     try {
         console.log('Iniciando salvamento no Supabase...');
         
+        // ✅ CORREÇÃO: Verificar se o Supabase está inicializado
+        if (!supabase) {
+            if (!inicializarSupabase()) {
+                console.log('⚠️ Supabase não disponível - salvando localmente');
+                return null;
+            }
+        }
+
         const session = await checkAuth();
         if (!session) {
             // Se não estiver autenticado, salvar localmente
@@ -1773,18 +1794,17 @@ function limparFormulario() {
     alert('Formulário limpo com sucesso! Pronto para criar uma nova OS.');
 }
 
-/* ========== Inicialização ========== */
+/* ========== Inicialização CORRIGIDA ========== */
 window.addEventListener('load', function(){
-  document.getElementById('btnUseNow').addEventListener('click', function(){
-    const now = new Date();
-    const pad = n => String(n).padStart(2, '0');
-    const dtLocal = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
-    document.getElementById('dataHora').value = dtLocal;
-  });
-});
-
-window.addEventListener('load', function(){
-  populatePOP();
+  // ✅ CORREÇÃO: Inicializar Supabase primeiro, depois carregar POPs
+  setTimeout(() => {
+    if (inicializarSupabase()) {
+      populatePOP();
+    } else {
+      carregarPOPsLocais();
+    }
+  }, 100);
+  
   gerarNumeroOS();
   fillNowDateTime();
   fillHoraInicio();
