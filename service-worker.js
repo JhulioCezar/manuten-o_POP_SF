@@ -1,101 +1,109 @@
-const CACHE_NAME = 'manutencao-pop-v2.0.1';
+// ===============================
+//  SERVICE WORKER - VERSÃO FINAL
+// ===============================
+
+const VERSION = "v3.0.0";
+const CACHE_NAME = "manutencao-pop-" + VERSION;
+
+// Caminho base do seu GitHub Pages
+const BASE = "/manuten-o_POP_SF/";
+
+// Arquivos a serem cacheados
 const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json',
-  './android-icon-192x192.png',
-  './android-icon-512x512.png',
-  './apple-touch-icon.png',
-  './favicon.ico',
-  './favicon-96x96.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
-  'https://i.imgur.com/SEr4lkm.png'
+  BASE,
+  BASE + "index.html",
+  BASE + "manifest.json",
+  BASE + "android-icon-192x192.png",
+  BASE + "android-icon-512x512.png",
+  BASE + "apple-touch-icon.png",
+  BASE + "favicon.ico",
+  BASE + "favicon-96x96.png",
+  "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js",
+  "https://i.imgur.com/SEr4lkm.png"
 ];
 
-// Instalação do Service Worker
-self.addEventListener('install', function(event) {
-  console.log('Service Worker instalando...');
+// ===============================
+// INSTALL — instala o SW e já ativa a nova versão
+// ===============================
+self.addEventListener("install", event => {
+  console.log("⬇️ Instalando nova versão do SW:", VERSION);
+
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(function(cache) {
-        console.log('Cache aberto');
-        return cache.addAll(urlsToCache);
-      })
-      .then(function() {
-        console.log('Todos os recursos cacheados');
-        return self.skipWaiting();
-      })
+      .then(cache => cache.addAll(urlsToCache))
+      .then(() => self.skipWaiting())
   );
 });
 
-// Ativação do Service Worker
-self.addEventListener('activate', function(event) {
-  console.log('Service Worker ativado');
+// ===============================
+// ACTIVATE — remove caches antigos e ativa imediatamente
+// ===============================
+self.addEventListener("activate", event => {
+  console.log("⚡ SW ativado:", VERSION);
+
   event.waitUntil(
-    caches.keys().then(function(cacheNames) {
-      return Promise.all(
-        cacheNames.map(function(cacheName) {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deletando cache antigo:', cacheName);
-            return caches.delete(cacheName);
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            console.log("🗑️ Removendo cache antigo:", key);
+            return caches.delete(key);
           }
         })
-      );
-    }).then(function() {
-      return self.clients.claim();
-    })
+      )
+    ).then(() => self.clients.claim())
   );
 });
 
-// Estratégia: Network First para HTML, Cache First para recursos
-self.addEventListener('fetch', function(event) {
-  // Para a página principal, tenta network primeiro
-  if (event.request.url === self.location.origin + '/' || 
-      event.request.url === self.location.origin + '/index.html') {
+// ===============================
+// FETCH — Network first para index.html, cache-first para recursos
+// ===============================
+self.addEventListener("fetch", event => {
+
+  const req = event.request;
+
+  // Página principal -> Network first
+  if (req.url === self.location.origin + BASE || req.url === self.location.origin + BASE + "index.html") {
     event.respondWith(
-      fetch(event.request)
+      fetch(req)
         .then(response => {
-          // Atualiza o cache com a nova versão
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME)
-            .then(cache => cache.put(event.request, responseClone));
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
           return response;
         })
-        .catch(() => {
-          // Fallback para cache se offline
-          return caches.match('./index.html');
-        })
+        .catch(() => caches.match(BASE + "index.html"))
     );
     return;
   }
 
-  // Para outros recursos, cache first
+  // Outros arquivos -> Cache first
   event.respondWith(
-    caches.match(event.request)
-      .then(function(response) {
-        if (response) {
+    caches.match(req).then(cached => {
+      if (cached) return cached;
+
+      return fetch(req)
+        .then(response => {
+          const clone = response.clone();
+          if (response.status === 200 && req.url.startsWith(self.location.origin)) {
+            caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
+          }
           return response;
-        }
-        
-        return fetch(event.request)
-          .then(function(fetchResponse) {
-            // Cache apenas se for sucesso e não for API externa
-            if (fetchResponse && fetchResponse.status === 200 && 
-                !event.request.url.includes('script.google.com')) {
-              const responseToCache = fetchResponse.clone();
-              caches.open(CACHE_NAME)
-                .then(function(cache) {
-                  cache.put(event.request, responseToCache);
-                });
-            }
-            return fetchResponse;
-          })
-          .catch(function() {
-            // Fallback para ícones se offline
-            if (event.request.destination === 'image') {
-              return caches.match('./android-icon-192x192.png');
-            }
-          });
-      })
+        })
+        .catch(() => {
+          if (req.destination === "image") {
+            return caches.match(BASE + "android-icon-192x192.png");
+          }
+        });
+    })
   );
+});
+
+// ===============================
+// UPDATE POPUP — permite que o site peça atualização
+// ===============================
+self.addEventListener("message", event => {
+  if (event.data === "checkForUpdate") {
+    console.log("🔄 Forçando atualização do SW…");
+    self.skipWaiting();
+  }
 });
